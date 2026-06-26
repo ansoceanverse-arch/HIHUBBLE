@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewPanels = document.querySelectorAll('.view-panel');
   const sidebarNavItems = document.querySelectorAll('.nav-item');
   const radialNavItems = document.querySelectorAll('.radial-item-bubble');
+  const mobileNavItems = document.querySelectorAll('.mobile-nav-btn');
   const appContainer = document.querySelector('.chats-layout-grid');
 
   function switchView(viewName) {
@@ -121,6 +122,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // Update active mobile bottom nav items
+    mobileNavItems.forEach(nav => {
+      const target = nav.getAttribute('data-target-view');
+      if (target === viewName) {
+        nav.classList.add('active');
+      } else {
+        nav.classList.remove('active');
+      }
+    });
+
     // Pause explore reels videos if we leave Explore View
     if (viewName !== 'explore') {
       const reelVideos = document.querySelectorAll('.reel-video');
@@ -148,6 +159,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (target) {
         switchView(target);
       }
+    });
+  });
+
+  mobileNavItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const target = item.getAttribute('data-target-view');
+      if (target) switchView(target);
     });
   });
 
