@@ -23,7 +23,9 @@ export function initAuth() {
   const otpTimer = document.getElementById('otp-timer');
   const otpErrorMsg = document.getElementById('otp-error-msg');
 
-  const API_URL = 'http://localhost:3000';
+  const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : window.location.origin;
   let tempUserData = null;
   let pendingVerificationEmail = null;
   let isSignUpVerification = false;

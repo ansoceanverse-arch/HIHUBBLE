@@ -2,12 +2,20 @@ import express from 'express';
 import nodemailer from 'nodemailer';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, 'dist')));
 
 const PORT = process.env.PORT || 3000;
 
@@ -105,6 +113,11 @@ app.post('/api/verify-otp', (req, res) => {
   // Clear OTP on successful verification
   otps.delete(email.toLowerCase());
   res.json({ success: true, message: 'OTP verified successfully' });
+});
+
+// Fallback all other requests to frontend SPA
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {
