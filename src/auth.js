@@ -1,3 +1,49 @@
+// Express backend URL — on Vite dev (5173) we still hit Express on 3000
+const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:3000'
+  : window.location.origin;
+
+// LocalStorage User Database Helper Functions
+const defaultUsers = [
+  {
+    "fullName": "Venkata murali",
+    "email": "vu.241fa04c65@gmail.com",
+    "username": "murali123",
+    "password": "nari9347",
+    "dob": "2005-08-24",
+    "age": 20
+  },
+  {
+    "fullName": "Venkata murali",
+    "email": "muralivenkata167@gmail.com",
+    "username": "murali__chowdhary",
+    "password": "nari9347",
+    "dob": "2005-08-24",
+    "age": 20
+  },
+  {
+    "fullName": "Venkata murali",
+    "email": "muralivenkata711@gmail.com",
+    "username": "emurali",
+    "password": "nari9347",
+    "dob": "2005-08-24",
+    "age": 20
+  }
+];
+
+function getUsersDB() {
+  const db = localStorage.getItem('invibe_users_db');
+  if (db === null) {
+    localStorage.setItem('invibe_users_db', JSON.stringify(defaultUsers));
+    return defaultUsers;
+  }
+  return db ? JSON.parse(db) : [];
+}
+
+function saveUsersDB(db) {
+  localStorage.setItem('invibe_users_db', JSON.stringify(db));
+}
+
 export function initAuth() {
   const authView = document.getElementById('auth-view');
   const appContainer = document.getElementById('app-container');
@@ -23,739 +69,726 @@ export function initAuth() {
   const otpTimer = document.getElementById('otp-timer');
   const otpErrorMsg = document.getElementById('otp-error-msg');
 
-  const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000'
-    : window.location.origin;
+  // Multi-channel 2FA elements & states
+  const authPhoneInput = document.getElementById('auth-phone');
+  const pref2faEmailBtn = document.getElementById('pref-2fa-email');
+  const pref2faSmsBtn = document.getElementById('pref-2fa-sms');
+  const otpDeliveryEmailBtn = document.getElementById('otp-delivery-email');
+  const otpDeliverySmsBtn = document.getElementById('otp-delivery-sms');
+  const otpInstructionText = document.getElementById('otp-instruction-text');
+
   let tempUserData = null;
   let pendingVerificationEmail = null;
+  let pendingVerificationPhone = null;
+  let activeDeliveryMethod = 'email'; // 'email' or 'sms'
+  let selected2faPreference = 'email'; // 'email' or 'sms' for signup
   let isSignUpVerification = false;
   let isForgotVerification = false;
   let tempNewPassword = null;
-
-  // Focus transition logic for 6-digit OTP code inputs
-  if (otpInputs.length > 0) {
-    otpInputs.forEach((input, idx) => {
-      input.addEventListener('input', (e) => {
-        input.value = input.value.replace(/[^0-9]/g, '');
-        if (input.value && idx < otpInputs.length - 1) {
-          otpInputs[idx + 1].focus();
-        }
-      });
-
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && !input.value && idx > 0) {
-          otpInputs[idx - 1].focus();
-        }
-      });
-
-      input.addEventListener('paste', (e) => {
-        e.preventDefault();
-        const pastedData = e.clipboardData.getData('text').trim();
-        if (/^\d{6}$/.test(pastedData)) {
-          pastedData.split('').forEach((char, i) => {
-            if (otpInputs[i]) otpInputs[i].value = char;
-          });
-          otpInputs[5].focus();
-        }
-      });
-    });
-  }
-
   let resendTimerInterval = null;
   let countdown = 30;
 
-  function startResendTimer() {
-    if (resendOtpLink) resendOtpLink.classList.add('disabled');
-    countdown = 30;
-    if (otpTimer) otpTimer.textContent = countdown;
-    
-    if (resendTimerInterval) clearInterval(resendTimerInterval);
-    resendTimerInterval = setInterval(() => {
-      countdown--;
-      if (otpTimer) otpTimer.textContent = countdown;
-      if (countdown <= 0) {
-        clearInterval(resendTimerInterval);
-        if (resendOtpLink) {
-          resendOtpLink.classList.remove('disabled');
-          resendOtpLink.innerHTML = 'Resend Code';
-        }
-      }
-    }, 1000);
-  }
-
-  async function sendOTPEmail(email) {
-    try {
-      const res = await fetch(`${API_URL}/api/send-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-      
-      let data;
-      try {
-        data = await res.json();
-      } catch (parseErr) {
-        throw new Error('Invalid server response');
-      }
-
-      if (!res.ok) {
-        if (data.devFallbackOtp) {
-          if (otpErrorMsg) {
-            otpErrorMsg.innerHTML = `<span style="color: #eab308">⚠️ SMTP Error: ${data.details || 'Auth failed'}.</span><br><span style="color: #22c55e">Dev Mode OTP: ${data.devFallbackOtp}</span>`;
-          }
-          return true;
-        }
-        throw new Error(data.error || 'Failed to send verification code');
-      }
-      return true;
-    } catch (err) {
-      console.error('Fetch error, falling back to local simulation:', err);
-      const mockOtp = "123456";
-      window.localMockOtp = mockOtp;
-      
-      if (otpErrorMsg) {
-        otpErrorMsg.innerHTML = `<span style="color: #eab308">⚠️ Static Host Mode (No Backend).</span><br><span style="color: #22c55e">Simulated Verification Code: ${mockOtp}</span>`;
-      }
-      return true;
+  // ─── HELPER: Show Welcome Panel ──────────────────────────────────────────────
+  function showWelcomePanelDefault() {
+    if (authWelcomePanel) {
+      authWelcomePanel.style.display = 'flex';
+      authWelcomePanel.classList.remove('hidden');
     }
-  }
-
-  if (verifyOtpBtn) {
-    verifyOtpBtn.addEventListener('click', async () => {
-      const code = Array.from(otpInputs).map(input => input.value).join('');
-      if (code.length < 6) {
-        if (otpErrorMsg) otpErrorMsg.textContent = "Please enter the complete 6-digit code.";
-        return;
-      }
-
-      if (otpErrorMsg) otpErrorMsg.textContent = "Verifying...";
-
-      let isVerified = false;
-      let errorMsg = "Verification failed. Invalid code.";
-
-      try {
-        const res = await fetch(`${API_URL}/api/verify-otp`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: pendingVerificationEmail, otp: code })
-        });
-        
-        let data;
-        try {
-          data = await res.json();
-          if (res.ok && !data.error) {
-            isVerified = true;
-          } else {
-            errorMsg = (data && data.error) || errorMsg;
-          }
-        } catch (parseErr) {
-          // JSON parse failed, check local fallback
-        }
-      } catch (err) {
-        console.error('Fetch verification failed, checking local mock OTP:', err);
-      }
-
-      if (!isVerified && window.localMockOtp && code === window.localMockOtp) {
-        isVerified = true;
-        window.localMockOtp = null; // clear
-      }
-
-      try {
-        if (!isVerified) {
-          throw new Error(errorMsg);
-        }
-
-        // Verification Succeeded!
-        if (otpModal) otpModal.classList.remove('active');
-        
-        if (isSignUpVerification) {
-          localStorage.setItem('invibeUser', JSON.stringify(tempUserData));
-          // Register user on server so it can be accessed from other devices
-          try {
-            fetch(`${API_URL}/api/register-user`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ username: tempUserData.username, userData: tempUserData })
-            }).catch(err => console.error('Failed to sync user to server:', err));
-          } catch (err) {
-            console.error('Failed to sync user to server:', err);
-          }
-          if (profileUploadModal) {
-            profileUploadModal.classList.add('active');
-            if (window.startLiveCamera) window.startLiveCamera();
-          }
-        } else if (isForgotVerification) {
-          let userStr = localStorage.getItem('invibeUser');
-          if (userStr) {
-            const user = JSON.parse(userStr);
-            user.password = tempNewPassword;
-            localStorage.setItem('invibeUser', JSON.stringify(user));
-            // Sync password update to server
-            try {
-              fetch(`${API_URL}/api/register-user`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: user.username, userData: user })
-              }).catch(err => console.error('Failed to sync password to server:', err));
-            } catch (err) {
-              console.error('Failed to sync password to server:', err);
-            }
-          }
-          localStorage.setItem('invibeIsLoggedIn', 'true');
-          if (authView) authView.classList.add('hidden');
-          setTimeout(() => {
-            if (authView) authView.style.display = 'none';
-            if (appContainer) appContainer.style.display = 'block';
-            updateAppUI();
-          }, 500);
-        } else {
-          localStorage.setItem('invibeIsLoggedIn', 'true');
-          if (authView) authView.classList.add('hidden');
-          setTimeout(() => {
-            if (authView) authView.style.display = 'none';
-            if (appContainer) appContainer.style.display = 'block';
-            updateAppUI();
-          }, 500);
-        }
-      } catch (err) {
-        console.error(err);
-        if (otpErrorMsg) otpErrorMsg.textContent = err.message;
-      }
-    });
-  }
-
-  if (resendOtpLink) {
-    resendOtpLink.addEventListener('click', async (e) => {
-      e.preventDefault();
-      if (resendOtpLink.classList.contains('disabled')) return;
-      
-      if (otpErrorMsg) otpErrorMsg.textContent = "Sending new code...";
-      const sent = await sendOTPEmail(pendingVerificationEmail);
-      if (sent) {
-        if (otpErrorMsg) otpErrorMsg.textContent = "New verification code sent!";
-        startResendTimer();
-      }
-    });
-  }
-
-  // Check login state
-  const isLoggedIn = localStorage.getItem('invibeIsLoggedIn') === 'true';
-  if (isLoggedIn) {
-    if (authView) authView.style.display = 'none';
-    if (appContainer) appContainer.style.display = 'block';
-    updateAppUI();
-    return;
-  }
-
-  if (authView) authView.style.display = 'flex';
-  if (appContainer) appContainer.style.display = 'none';
-
-  // Show welcome page by default, hide form panel
-  if (authWelcomePanel) {
-    authWelcomePanel.style.display = 'flex';
-    authWelcomePanel.classList.remove('hidden');
-  }
-  if (authGlassContainer) {
-    authGlassContainer.classList.add('hidden-container');
-  }
-
-  // Reflow Lucide icons inside dynamic panels
-  if (window.lucide) {
-    window.lucide.createIcons();
-  }
-
-  // Transitions
-  function showWelcome() {
     if (authGlassContainer) {
       authGlassContainer.classList.add('hidden-container');
     }
-    setTimeout(() => {
-      if (authWelcomePanel) {
-        authWelcomePanel.style.display = 'flex';
-        // Force reflow
-        authWelcomePanel.offsetHeight;
-        authWelcomePanel.classList.remove('hidden');
-      }
-    }, 350);
+    if (window.debouncedCreateIcons) window.debouncedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
   }
 
-  function showAuthForm(mode) {
-    if (authWelcomePanel) {
-      authWelcomePanel.classList.add('hidden');
+  function showAuthView() {
+    if (authView) {
+      authView.classList.remove('hidden');
+      authView.style.display = 'flex';
     }
-    setTimeout(() => {
-      if (authWelcomePanel) authWelcomePanel.style.display = 'none';
-      if (authGlassContainer) {
-        authGlassContainer.style.display = 'flex';
-        // Force reflow
-        authGlassContainer.offsetHeight;
-        authGlassContainer.classList.remove('hidden-container');
+    if (appContainer) appContainer.style.display = 'none';
+    showWelcomePanelDefault();
+  }
+
+  function showAppView() {
+    if (authView) {
+      authView.classList.add('hidden');
+      authView.style.display = 'none';
+    }
+    if (appContainer) appContainer.style.display = 'block';
+    updateAppUI();
+  }
+
+  // ─── SESSION CHECK ────────────────────────────────────────────────────────────
+  // Set to false to always show sign-in/sign-up page first when the app is run/refreshed.
+  // Change to `localStorage.getItem('invibeIsLoggedIn') === 'true'` if you want auto-login.
+  const isLoggedIn = false;
+
+  if (isLoggedIn) {
+    const userStr = localStorage.getItem('invibeUser');
+    if (userStr) {
+      // Sync session profileImage from db
+      try {
+        const user = JSON.parse(userStr);
+        const users = getUsersDB();
+        const dbUser = users.find(u => u.username.toLowerCase() === user.username.toLowerCase());
+        const token = localStorage.getItem('invibe_jwt_token');
+        if (dbUser && dbUser.profileImage && (!token || token === 'mock-jwt-token')) {
+          localStorage.setItem('invibeProfileImage', dbUser.profileImage);
+        }
+      } catch (e) {
+        console.error('Session sync error:', e);
       }
-      
-      if (mode === 'signin') {
-        setSignInMode();
-      } else {
-        setSignUpMode();
-      }
-    }, 350);
-  }
-
-  if (welcomeSigninBtn) {
-    welcomeSigninBtn.addEventListener('click', () => showAuthForm('signin'));
-  }
-
-  if (welcomeSignupBtn) {
-    welcomeSignupBtn.addEventListener('click', () => showAuthForm('signup'));
-  }
-
-  if (authBackBtn) {
-    authBackBtn.addEventListener('click', showWelcome);
-  }
-
-  // Logout Logic
-  const logoutBtn = document.getElementById('logout-btn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
+      showAppView();
+    } else {
       localStorage.removeItem('invibeIsLoggedIn');
-      if (appContainer) appContainer.style.display = 'none';
-      if (authView) {
-        authView.classList.remove('hidden');
-        authView.style.display = 'flex';
+      localStorage.removeItem('invibeUser');
+      localStorage.removeItem('invibeProfileImage');
+      showAuthView();
+    }
+
+    // Wire up event listeners even in logged-in state so logout / nav works
+    wireEventListeners();
+    initProfileUpload();
+    return;
+  }
+
+  // Not logged in — show auth view immediately
+  showAuthView();
+  wireEventListeners();
+  initProfileUpload();
+
+  // ─── ALL EVENT LISTENERS ─────────────────────────────────────────────────────
+  function wireEventListeners() {
+    // ── Preferred 2FA selection in signup ───────────────────────────────────
+    if (pref2faEmailBtn && pref2faSmsBtn) {
+      pref2faEmailBtn.addEventListener('click', () => {
+        pref2faEmailBtn.classList.add('active');
+        pref2faSmsBtn.classList.remove('active');
+        selected2faPreference = 'email';
+      });
+      pref2faSmsBtn.addEventListener('click', () => {
+        pref2faSmsBtn.classList.add('active');
+        pref2faEmailBtn.classList.remove('active');
+        selected2faPreference = 'sms';
+      });
+    }
+
+    // ── OTP modal delivery channel tabs ─────────────────────────────────────
+    if (otpDeliveryEmailBtn && otpDeliverySmsBtn) {
+      otpDeliveryEmailBtn.addEventListener('click', () => {
+        if (activeDeliveryMethod === 'email') return;
+        activeDeliveryMethod = 'email';
+        otpDeliveryEmailBtn.classList.add('active');
+        otpDeliverySmsBtn.classList.remove('active');
+        if (otpInstructionText) {
+          otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your email address (${pendingVerificationEmail || ''}).`;
+        }
+        triggerResend('email');
+      });
+
+      otpDeliverySmsBtn.addEventListener('click', () => {
+        if (activeDeliveryMethod === 'sms') return;
+        if (otpDeliverySmsBtn.classList.contains('disabled')) return;
+        activeDeliveryMethod = 'sms';
+        otpDeliverySmsBtn.classList.add('active');
+        otpDeliveryEmailBtn.classList.remove('active');
+        if (otpInstructionText) {
+          otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your mobile number (${pendingVerificationPhone || ''}).`;
+        }
+        triggerResend('sms');
+      });
+    }
+
+    // ── Trigger Resend OTP Helper ───────────────────────────────────────────
+    async function triggerResend(method) {
+      if (otpErrorMsg) otpErrorMsg.textContent = `Sending code via ${method.toUpperCase()}…`;
+
+      try {
+        let endpoint = 'login-otp';
+        let payload = tempUserData || {};
+
+        if (isSignUpVerification) {
+          endpoint = 'signup-otp';
+          payload.preferred2faMethod = method;
+          payload.phoneNumber = authPhoneInput ? authPhoneInput.value.trim() : '';
+        } else if (isForgotVerification) {
+          endpoint = 'forgot-otp';
+          payload = {
+            username: tempUserData?.username,
+            newPassword: tempUserData?.newPassword,
+            deliveryMethod: method
+          };
+        } else {
+          endpoint = 'login-otp';
+          payload = {
+            username: tempUserData?.username,
+            password: tempUserData?.password,
+            deliveryMethod: method
+          };
+        }
+
+        const result = await sendOTPEmail(endpoint, payload);
+        if (result && result.success) {
+          if (otpErrorMsg) {
+            const dest = method === 'sms' ? (result.phoneNumber || 'your phone') : (result.email || 'your email');
+            otpErrorMsg.innerHTML = `<span style="color:#22c55e">Code sent via ${method.toUpperCase()} to ${dest}</span>`;
+          }
+          startResendTimer();
+        }
+      } catch (err) {
+        if (otpErrorMsg) otpErrorMsg.textContent = err.message || 'Failed to resend code';
       }
-      // Reset views back to Welcome panel
+    }
+
+    // ── OTP input focus chaining ────────────────────────────────────────────
+    if (otpInputs.length > 0) {
+      otpInputs.forEach((input, idx) => {
+        input.addEventListener('input', () => {
+          input.value = input.value.replace(/[^0-9]/g, '');
+          if (input.value && idx < otpInputs.length - 1) {
+            otpInputs[idx + 1].focus();
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !input.value && idx > 0) {
+            otpInputs[idx - 1].focus();
+          }
+        });
+
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const pastedData = e.clipboardData.getData('text').trim();
+          if (/^\d{6}$/.test(pastedData)) {
+            pastedData.split('').forEach((char, i) => {
+              if (otpInputs[i]) otpInputs[i].value = char;
+            });
+            otpInputs[5].focus();
+          }
+        });
+      });
+    }
+
+    // ── Resend timer ────────────────────────────────────────────────────────
+    function startResendTimer() {
+      if (resendOtpLink) resendOtpLink.classList.add('disabled');
+      countdown = 30;
+      if (otpTimer) otpTimer.textContent = countdown;
+
+      if (resendTimerInterval) clearInterval(resendTimerInterval);
+      resendTimerInterval = setInterval(() => {
+        countdown--;
+        if (otpTimer) otpTimer.textContent = countdown;
+        if (countdown <= 0) {
+          clearInterval(resendTimerInterval);
+          if (resendOtpLink) {
+            resendOtpLink.classList.remove('disabled');
+            resendOtpLink.innerHTML = 'Resend Code';
+          }
+        }
+      }, 1000);
+    }
+
+    // ── Send OTP via Express backend ────────────────────────────────────────
+    async function sendOTPEmail(endpoint, payload) {
+      const res = await fetch(`${API_URL}/api/auth/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      let data;
+      try { data = await res.json(); } catch { throw new Error('Invalid server response'); }
+
+      if (!res.ok) {
+        if (data && data.devFallbackOtp) {
+          alert(`Notice: OTP transmission failed. Fallback mode is active. Please check your Node.js server terminal logs for the 6-digit verification code!`);
+          data.success = true;
+          return data;
+        }
+        const errorMsg = data.error + (data.details ? ` (${data.details})` : '');
+        throw new Error(errorMsg);
+      }
+      return data;
+    }
+
+    // ── Verify OTP button ───────────────────────────────────────────────────
+    if (verifyOtpBtn) {
+      verifyOtpBtn.addEventListener('click', async () => {
+        const code = Array.from(otpInputs).map(i => i.value).join('');
+        if (code.length < 6) {
+          if (otpErrorMsg) otpErrorMsg.textContent = 'Please enter the complete 6-digit code.';
+          return;
+        }
+
+        if (otpErrorMsg) otpErrorMsg.textContent = 'Verifying…';
+        verifyOtpBtn.disabled = true;
+
+        let isVerified = false;
+        let errorMsg = 'Verification failed. Invalid code.';
+        let verifyData = null;
+
+        try {
+          const res = await fetch(`${API_URL}/api/auth/verify-action-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: pendingVerificationEmail, otp: code })
+          });
+          try { verifyData = await res.json(); } catch { /* ignore */ }
+          if (res.ok && verifyData && !verifyData.error) {
+            isVerified = true;
+          } else {
+            errorMsg = (verifyData && verifyData.error) || errorMsg;
+          }
+        } catch (err) {
+          console.error('Verification error:', err);
+          errorMsg = err.message || errorMsg;
+        }
+
+        verifyOtpBtn.disabled = false;
+
+        if (!isVerified) {
+          if (otpErrorMsg) otpErrorMsg.textContent = errorMsg;
+          return;
+        }
+
+        // ── Verification succeeded ──
+        if (otpModal) otpModal.classList.remove('active');
+        if (otpErrorMsg) otpErrorMsg.textContent = '';
+
+        try {
+          if (verifyData && verifyData.token) {
+            localStorage.setItem('invibe_jwt_token', verifyData.token);
+            localStorage.setItem('invibeIsLoggedIn', 'true');
+            localStorage.setItem('invibeUser', JSON.stringify(verifyData.user));
+            localStorage.setItem('invibeProfileImage', verifyData.user.profileImage || '');
+          }
+
+          if (isSignUpVerification) {
+            // Show profile photo capture modal
+            if (profileUploadModal) {
+              profileUploadModal.classList.add('active');
+              if (window.startLiveCamera) window.startLiveCamera();
+            }
+          } else {
+            showAppView();
+          }
+        } catch (err) {
+          console.error('Post-verification error:', err);
+          if (otpErrorMsg) {
+            otpModal.classList.add('active');
+            otpErrorMsg.textContent = err.message;
+          }
+        }
+      });
+    }
+
+    // ── Resend OTP link ─────────────────────────────────────────────────────
+    if (resendOtpLink) {
+      resendOtpLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (resendOtpLink.classList.contains('disabled')) return;
+        triggerResend(activeDeliveryMethod);
+      });
+    }
+
+    // ── Welcome panel transitions ───────────────────────────────────────────
+    function showWelcome() {
+      console.log('showWelcome: Navigating back to welcome panel');
       if (authGlassContainer) {
         authGlassContainer.classList.add('hidden-container');
       }
+      setTimeout(() => {
+        if (authGlassContainer) {
+          authGlassContainer.style.display = 'none';
+        }
+        if (authWelcomePanel) {
+          authWelcomePanel.style.display = 'flex';
+          authWelcomePanel.offsetHeight; // force reflow
+          authWelcomePanel.classList.remove('hidden');
+        }
+      }, 350);
+    }
+
+    function showAuthForm(mode) {
+      console.log('showAuthForm: Navigating to auth form with mode:', mode);
       if (authWelcomePanel) {
-        authWelcomePanel.style.display = 'flex';
-        authWelcomePanel.classList.remove('hidden');
+        authWelcomePanel.classList.add('hidden');
       }
-    });
-  }
-
-  // Toggle Sign In / Sign Up / Forgot Password Mode
-  let currentMode = 'signup'; // 'signup', 'signin', 'forgot'
-
-  function handleAgeValidation() {
-    if (currentMode !== 'signup') return;
-    if (!dobInput || !dobInput.value) {
-      if (createAccountBtn) createAccountBtn.disabled = true;
-      if (ageCheckbox) ageCheckbox.classList.remove('checked');
-      return;
-    }
-    const dob = new Date(dobInput.value);
-    if (isNaN(dob.getTime())) {
-      if (createAccountBtn) createAccountBtn.disabled = true;
-      if (ageCheckbox) ageCheckbox.classList.remove('checked');
-      return;
-    }
-    
-    const today = new Date();
-    let age = today.getFullYear() - dob.getFullYear();
-    const m = today.getMonth() - dob.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
-      age--;
-    }
-
-    if (age >= 18) {
-      if (ageCheckbox) ageCheckbox.classList.add('checked');
-      if (ageWarning) ageWarning.style.display = 'none';
-      if (createAccountBtn) createAccountBtn.disabled = false;
-    } else {
-      if (ageCheckbox) ageCheckbox.classList.remove('checked');
-      if (ageWarning) ageWarning.style.display = 'block';
-      if (createAccountBtn) createAccountBtn.disabled = true;
-    }
-  }
-
-  // Age Validation Logic
-  if (dobInput) {
-    dobInput.addEventListener('change', handleAgeValidation);
-    dobInput.addEventListener('input', handleAgeValidation);
-    dobInput.addEventListener('blur', handleAgeValidation);
-  }
-  const toggleBtn = document.getElementById('auth-toggle-btn');
-  const toggleText = document.getElementById('auth-toggle-text');
-  const title = document.getElementById('auth-form-title');
-  const signupElements = document.querySelectorAll('.signup-only');
-  const signinElements = document.querySelectorAll('.signin-only');
-  const forgotElements = document.querySelectorAll('.forgot-only');
-  const forgotBtn = document.getElementById('auth-forgot-btn');
-
-  function setSignInMode() {
-    currentMode = 'signin';
-    
-    // Hide signup elements
-    signupElements.forEach(el => {
-      el.style.display = 'none';
-      const inputs = el.querySelectorAll('input');
-      inputs.forEach(input => input.removeAttribute('required'));
-    });
-    
-    // Show signin elements
-    signinElements.forEach(el => {
-      el.style.display = '';
-    });
-    
-    // Hide forgot password elements
-    forgotElements.forEach(el => {
-      el.style.display = 'none';
-      const inputs = el.querySelectorAll('input');
-      inputs.forEach(input => input.removeAttribute('required'));
-    });
-    
-    // Configure input requirements & layout for Username, Email, Password
-    const emailInput = document.getElementById('auth-email');
-    if (emailInput) {
-      const parent = emailInput.closest('.input-group');
-      if (parent) parent.style.display = 'none';
-      emailInput.removeAttribute('required');
-    }
-    
-    const usernameInput = document.getElementById('auth-username');
-    if (usernameInput) {
-      const parent = usernameInput.closest('.input-group');
-      if (parent) parent.style.display = '';
-      usernameInput.setAttribute('required', 'true');
-    }
-
-    const passwordInput = document.getElementById('auth-password');
-    if (passwordInput) {
-      passwordInput.placeholder = "Password";
-    }
-
-    title.textContent = "Sign in to your account.";
-    createAccountBtn.textContent = "Sign In";
-    createAccountBtn.disabled = false;
-    toggleText.textContent = "Don't have an account?";
-    toggleBtn.textContent = "Sign Up";
-  }
-
-  function setSignUpMode() {
-    currentMode = 'signup';
-    
-    // Show signup elements
-    signupElements.forEach(el => {
-      el.style.display = '';
-      const inputs = el.querySelectorAll('input');
-      inputs.forEach(input => input.setAttribute('required', 'true'));
-    });
-    
-    // Hide signin elements
-    signinElements.forEach(el => {
-      el.style.display = 'none';
-    });
-    
-    // Hide forgot password elements
-    forgotElements.forEach(el => {
-      el.style.display = 'none';
-      const inputs = el.querySelectorAll('input');
-      inputs.forEach(input => input.removeAttribute('required'));
-    });
-
-    // Configure input requirements & layout for Username, Email, Password
-    const emailInput = document.getElementById('auth-email');
-    if (emailInput) {
-      const parent = emailInput.closest('.input-group');
-      if (parent) parent.style.display = '';
-      emailInput.setAttribute('required', 'true');
-    }
-    
-    const usernameInput = document.getElementById('auth-username');
-    if (usernameInput) {
-      const parent = usernameInput.closest('.input-group');
-      if (parent) parent.style.display = '';
-      usernameInput.setAttribute('required', 'true');
-    }
-
-    const passwordInput = document.getElementById('auth-password');
-    if (passwordInput) {
-      passwordInput.placeholder = "Password";
-    }
-
-    title.textContent = "Create your account.";
-    createAccountBtn.textContent = "Create Account";
-    
-    // Recalculate create account button disabled state based on DOB/Age
-    handleAgeValidation();
-    
-    toggleText.textContent = "Already have an account?";
-    toggleBtn.textContent = "Sign In";
-  }
-
-  function setForgotMode() {
-    currentMode = 'forgot';
-    
-    // Hide signup elements
-    signupElements.forEach(el => {
-      el.style.display = 'none';
-      const inputs = el.querySelectorAll('input');
-      inputs.forEach(input => input.removeAttribute('required'));
-    });
-    
-    // Hide signin elements
-    signinElements.forEach(el => {
-      el.style.display = 'none';
-    });
-    
-    // Show forgot password elements
-    forgotElements.forEach(el => {
-      el.style.display = '';
-      const inputs = el.querySelectorAll('input');
-      inputs.forEach(input => input.setAttribute('required', 'true'));
-    });
-
-    // Configure input requirements & layout for Username, Email, Password
-    const emailInput = document.getElementById('auth-email');
-    if (emailInput) {
-      const parent = emailInput.closest('.input-group');
-      if (parent) parent.style.display = 'none';
-      emailInput.removeAttribute('required');
-    }
-    
-    const usernameInput = document.getElementById('auth-username');
-    if (usernameInput) {
-      const parent = usernameInput.closest('.input-group');
-      if (parent) parent.style.display = '';
-      usernameInput.setAttribute('required', 'true');
-    }
-
-    const passwordInput = document.getElementById('auth-password');
-    if (passwordInput) {
-      passwordInput.placeholder = "New Password";
-    }
-
-    title.textContent = "Reset your password.";
-    createAccountBtn.textContent = "Reset Password";
-    createAccountBtn.disabled = false;
-    toggleText.textContent = "Remember your password?";
-    toggleBtn.textContent = "Sign In";
-  }
-
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (currentMode === 'signup' || currentMode === 'forgot') {
-        setSignInMode();
-      } else {
-        setSignUpMode();
-      }
-    });
-  }
-
-  if (forgotBtn) {
-    forgotBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      setForgotMode();
-    });
-  }
-
-  // Form Submission
-  if (authForm) {
-    authForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      if (currentMode === 'signin') {
-        // Sign in flow: trigger OTP 2FA verification
-        const usernameVal = document.getElementById('auth-username').value;
-        const passwordVal = document.getElementById('auth-password').value;
-        
-        let user = null;
-        let userStr = localStorage.getItem('invibeUser');
-        if (userStr) {
-          const localUser = JSON.parse(userStr);
-          if (localUser.username && localUser.username.toLowerCase() === usernameVal.toLowerCase()) {
-            user = localUser;
-          }
+      setTimeout(() => {
+        if (authWelcomePanel) {
+          authWelcomePanel.style.display = 'none';
         }
-        
-        // If not found locally, fetch from backend in-memory DB
-        if (!user) {
+        if (authGlassContainer) {
+          authGlassContainer.style.display = 'flex';
+          authGlassContainer.offsetHeight; // force reflow
+          authGlassContainer.classList.remove('hidden-container');
+        }
+        if (mode === 'signin') setSignInMode();
+        else setSignUpMode();
+      }, 350);
+    }
+
+    if (welcomeSigninBtn) welcomeSigninBtn.addEventListener('click', () => showAuthForm('signin'));
+    if (welcomeSignupBtn) welcomeSignupBtn.addEventListener('click', () => showAuthForm('signup'));
+    if (authBackBtn) authBackBtn.addEventListener('click', showWelcome);
+
+    // ── Logout ──────────────────────────────────────────────────────────────
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        localStorage.removeItem('invibeIsLoggedIn');
+        localStorage.removeItem('invibeUser');
+        localStorage.removeItem('invibeProfileImage');
+        showAuthView();
+      });
+    }
+
+    // ── Mode toggle ─────────────────────────────────────────────────────────
+    let currentMode = 'signup';
+
+    function handleAgeValidation() {
+      if (currentMode !== 'signup') return;
+      if (!dobInput || !dobInput.value) {
+        if (createAccountBtn) createAccountBtn.disabled = true;
+        if (ageCheckbox) ageCheckbox.classList.remove('checked');
+        return;
+      }
+      const dob = new Date(dobInput.value);
+      if (isNaN(dob.getTime())) {
+        if (createAccountBtn) createAccountBtn.disabled = true;
+        if (ageCheckbox) ageCheckbox.classList.remove('checked');
+        return;
+      }
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+
+      if (age >= 18) {
+        if (ageCheckbox) ageCheckbox.classList.add('checked');
+        if (ageWarning) ageWarning.style.display = 'none';
+        if (createAccountBtn) createAccountBtn.disabled = false;
+      } else {
+        if (ageCheckbox) ageCheckbox.classList.remove('checked');
+        if (ageWarning) ageWarning.style.display = 'block';
+        if (createAccountBtn) createAccountBtn.disabled = true;
+      }
+    }
+
+    if (dobInput) {
+      dobInput.addEventListener('change', handleAgeValidation);
+      dobInput.addEventListener('input', handleAgeValidation);
+      dobInput.addEventListener('blur', handleAgeValidation);
+    }
+
+    const toggleBtn = document.getElementById('auth-toggle-btn');
+    const toggleText = document.getElementById('auth-toggle-text');
+    const title = document.getElementById('auth-form-title');
+    const signupElements = document.querySelectorAll('.signup-only');
+    const signinElements = document.querySelectorAll('.signin-only');
+    const forgotElements = document.querySelectorAll('.forgot-only');
+    const forgotBtn = document.getElementById('auth-forgot-btn');
+
+    function setSignInMode() {
+      currentMode = 'signin';
+      signupElements.forEach(el => {
+        el.style.display = 'none';
+        el.querySelectorAll('input').forEach(i => i.removeAttribute('required'));
+      });
+      signinElements.forEach(el => el.style.display = '');
+      forgotElements.forEach(el => {
+        el.style.display = 'none';
+        el.querySelectorAll('input').forEach(i => i.removeAttribute('required'));
+      });
+
+      const emailInput = document.getElementById('auth-email');
+      if (emailInput) { emailInput.closest('.input-group').style.display = 'none'; emailInput.removeAttribute('required'); }
+      const usernameInput = document.getElementById('auth-username');
+      if (usernameInput) { usernameInput.closest('.input-group').style.display = ''; usernameInput.setAttribute('required', 'true'); }
+      const passwordInput = document.getElementById('auth-password');
+      if (passwordInput) passwordInput.placeholder = 'Password';
+
+      if (title) title.textContent = 'Sign in to your account.';
+      if (createAccountBtn) { createAccountBtn.textContent = 'Sign In'; createAccountBtn.disabled = false; }
+      if (toggleText) toggleText.textContent = "Don't have an account?";
+      if (toggleBtn) toggleBtn.textContent = 'Sign Up';
+    }
+
+    function setSignUpMode() {
+      currentMode = 'signup';
+      signupElements.forEach(el => {
+        el.style.display = '';
+        el.querySelectorAll('input').forEach(i => i.setAttribute('required', 'true'));
+      });
+      signinElements.forEach(el => el.style.display = 'none');
+      forgotElements.forEach(el => {
+        el.style.display = 'none';
+        el.querySelectorAll('input').forEach(i => i.removeAttribute('required'));
+      });
+
+      const emailInput = document.getElementById('auth-email');
+      if (emailInput) { emailInput.closest('.input-group').style.display = ''; emailInput.setAttribute('required', 'true'); }
+      const usernameInput = document.getElementById('auth-username');
+      if (usernameInput) { usernameInput.closest('.input-group').style.display = ''; usernameInput.setAttribute('required', 'true'); }
+      const passwordInput = document.getElementById('auth-password');
+      if (passwordInput) passwordInput.placeholder = 'Password';
+
+      if (title) title.textContent = 'Create your account.';
+      if (createAccountBtn) { createAccountBtn.textContent = 'Create Account'; }
+      handleAgeValidation();
+      if (toggleText) toggleText.textContent = 'Already have an account?';
+      if (toggleBtn) toggleBtn.textContent = 'Sign In';
+    }
+
+    function setForgotMode() {
+      currentMode = 'forgot';
+      signupElements.forEach(el => {
+        el.style.display = 'none';
+        el.querySelectorAll('input').forEach(i => i.removeAttribute('required'));
+      });
+      signinElements.forEach(el => el.style.display = 'none');
+      forgotElements.forEach(el => {
+        el.style.display = '';
+        el.querySelectorAll('input').forEach(i => i.setAttribute('required', 'true'));
+      });
+
+      const emailInput = document.getElementById('auth-email');
+      if (emailInput) { emailInput.closest('.input-group').style.display = 'none'; emailInput.removeAttribute('required'); }
+      const usernameInput = document.getElementById('auth-username');
+      if (usernameInput) { usernameInput.closest('.input-group').style.display = ''; usernameInput.setAttribute('required', 'true'); }
+      const passwordInput = document.getElementById('auth-password');
+      if (passwordInput) passwordInput.placeholder = 'New Password';
+
+      if (title) title.textContent = 'Reset your password.';
+      if (createAccountBtn) { createAccountBtn.textContent = 'Reset Password'; createAccountBtn.disabled = false; }
+      if (toggleText) toggleText.textContent = 'Remember your password?';
+      if (toggleBtn) toggleBtn.textContent = 'Sign In';
+    }
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentMode === 'signup' || currentMode === 'forgot') setSignInMode();
+        else setSignUpMode();
+      });
+    }
+
+    if (forgotBtn) {
+      forgotBtn.addEventListener('click', (e) => { e.preventDefault(); setForgotMode(); });
+    }
+
+    // ── Form submission ─────────────────────────────────────────────────────
+    if (authForm) {
+      authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (currentMode === 'signin') {
+          const usernameVal = document.getElementById('auth-username').value.trim();
+          const passwordVal = document.getElementById('auth-password').value;
+
+          if (!usernameVal || !passwordVal) {
+            alert('Please enter your username and password.');
+            return;
+          }
+
+          if (createAccountBtn) { createAccountBtn.disabled = true; createAccountBtn.textContent = 'Verifying…'; }
+
           try {
-            const res = await fetch(`${API_URL}/api/get-user/${encodeURIComponent(usernameVal)}`);
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.success && data.userData) {
-                user = data.userData;
-                localStorage.setItem('invibeUser', JSON.stringify(user));
+            if (otpErrorMsg) otpErrorMsg.textContent = '';
+            otpInputs.forEach(i => i.value = '');
+
+            tempUserData = { username: usernameVal, password: passwordVal };
+            const result = await sendOTPEmail('login-otp', { username: usernameVal, password: passwordVal });
+            if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Sign In'; }
+
+            if (result && result.success) {
+              pendingVerificationEmail = result.email;
+              pendingVerificationPhone = result.phoneNumber;
+              activeDeliveryMethod = result.activeDeliveryMethod || result.preferred2faMethod || 'email';
+
+              // Configure tabs
+              if (otpDeliverySmsBtn) {
+                if (!pendingVerificationPhone) {
+                  otpDeliverySmsBtn.classList.add('disabled');
+                } else {
+                  otpDeliverySmsBtn.classList.remove('disabled');
+                }
               }
+
+              // Highlight active tab
+              if (activeDeliveryMethod === 'sms') {
+                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.add('active');
+                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.remove('active');
+                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your mobile number (${pendingVerificationPhone}).`;
+              } else {
+                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.add('active');
+                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.remove('active');
+                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your email address (${pendingVerificationEmail}).`;
+              }
+
+              isSignUpVerification = false;
+              isForgotVerification = false;
+              startResendTimer();
+              if (otpModal) otpModal.classList.add('active');
             }
           } catch (err) {
-            console.error('Failed to retrieve user from server:', err);
+            if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Sign In'; }
+            alert(err.message);
           }
-        }
-        
-        if (!user) {
-          // Create dummy user if none exists (fallback behavior)
-          user = {
-            fullName: 'Hi-Hubble User',
-            email: 'ansoceanversetechnologies@gmail.com',
-            username: usernameVal || 'hihubble',
-            dob: '1990-01-01',
-            age: 30,
-            password: passwordVal
-          };
-          localStorage.setItem('invibeUser', JSON.stringify(user));
-        }
 
-        // Validate password
-        if (user.password && user.password !== passwordVal) {
-          alert("Incorrect password. Please try again.");
-          return;
-        }
+        } else if (currentMode === 'forgot') {
+          const usernameVal = document.getElementById('auth-username').value.trim();
+          const passwordVal = document.getElementById('auth-password').value;
+          const confirmVal = document.getElementById('auth-confirm-password').value;
 
-        pendingVerificationEmail = user.email || 'ansoceanversetechnologies@gmail.com';
-        isSignUpVerification = false;
-        isForgotVerification = false;
+          if (!usernameVal) { alert('Please enter your username.'); return; }
+          if (passwordVal !== confirmVal) { alert('Passwords do not match.'); return; }
+          if (passwordVal.length < 6) { alert('Password must be at least 6 characters.'); return; }
 
-        if (otpErrorMsg) otpErrorMsg.textContent = '';
-        otpInputs.forEach(input => input.value = '');
+          if (createAccountBtn) { createAccountBtn.disabled = true; createAccountBtn.textContent = 'Sending OTP…'; }
 
-        createAccountBtn.disabled = true;
-        createAccountBtn.textContent = "Sending OTP...";
-
-        const sent = await sendOTPEmail(pendingVerificationEmail);
-        createAccountBtn.disabled = false;
-        createAccountBtn.textContent = "Sign In";
-
-        if (sent) {
-          startResendTimer();
-          if (otpModal) otpModal.classList.add('active');
-        }
-      } else if (currentMode === 'forgot') {
-        // Forgot password flow
-        const usernameVal = document.getElementById('auth-username').value.trim();
-        const passwordVal = document.getElementById('auth-password').value;
-        const confirmPasswordVal = document.getElementById('auth-confirm-password').value;
-
-        if (passwordVal !== confirmPasswordVal) {
-          alert("Passwords do not match. Please verify.");
-          return;
-        }
-
-        let user = null;
-        let userStr = localStorage.getItem('invibeUser');
-        if (userStr) {
-          const localUser = JSON.parse(userStr);
-          if (localUser.username && localUser.username.toLowerCase() === usernameVal.toLowerCase()) {
-            user = localUser;
-          }
-        }
-
-        // If not found locally, fetch from backend in-memory DB
-        if (!user) {
           try {
-            const res = await fetch(`${API_URL}/api/get-user/${encodeURIComponent(usernameVal)}`);
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.success && data.userData) {
-                user = data.userData;
-                localStorage.setItem('invibeUser', JSON.stringify(user));
+            if (otpErrorMsg) otpErrorMsg.textContent = '';
+            otpInputs.forEach(i => i.value = '');
+
+            tempUserData = { username: usernameVal, newPassword: passwordVal };
+            const result = await sendOTPEmail('forgot-otp', { username: usernameVal, newPassword: passwordVal });
+            if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Reset Password'; }
+
+            if (result && result.success) {
+              pendingVerificationEmail = result.email;
+              pendingVerificationPhone = result.phoneNumber;
+              activeDeliveryMethod = result.activeDeliveryMethod || result.preferred2faMethod || 'email';
+
+              // Configure tabs
+              if (otpDeliverySmsBtn) {
+                if (!pendingVerificationPhone) {
+                  otpDeliverySmsBtn.classList.add('disabled');
+                } else {
+                  otpDeliverySmsBtn.classList.remove('disabled');
+                }
               }
+
+              // Highlight active tab
+              if (activeDeliveryMethod === 'sms') {
+                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.add('active');
+                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.remove('active');
+                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your mobile number (${pendingVerificationPhone}).`;
+              } else {
+                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.add('active');
+                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.remove('active');
+                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your email address (${pendingVerificationEmail}).`;
+              }
+
+              isSignUpVerification = false;
+              isForgotVerification = true;
+              startResendTimer();
+              if (otpModal) otpModal.classList.add('active');
             }
           } catch (err) {
-            console.error('Failed to retrieve user from server:', err);
+            if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Reset Password'; }
+            alert(err.message);
+          }
+
+        } else {
+          // Sign Up
+          const fullName = document.getElementById('auth-fullname').value.trim();
+          const email = document.getElementById('auth-email').value.trim();
+          const username = document.getElementById('auth-username').value.trim();
+          const password = document.getElementById('auth-password').value;
+          const dob = document.getElementById('auth-dob').value;
+          const phoneNumber = authPhoneInput ? authPhoneInput.value.trim() : '';
+
+          if (!fullName || !email || !username || !password || !dob) {
+            alert('Please fill in all fields.');
+            return;
+          }
+          if (password.length < 6) { alert('Password must be at least 6 characters.'); return; }
+          if (selected2faPreference === 'sms' && !phoneNumber) {
+            alert('Please enter your Phone Number for SMS verification.');
+            return;
+          }
+
+          const today = new Date();
+          const dobDate = new Date(dob);
+          let age = today.getFullYear() - dobDate.getFullYear();
+          const m = today.getMonth() - dobDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) age--;
+
+          if (createAccountBtn) { createAccountBtn.disabled = true; createAccountBtn.textContent = 'Sending OTP…'; }
+
+          try {
+            if (otpErrorMsg) otpErrorMsg.textContent = '';
+            otpInputs.forEach(i => i.value = '');
+
+            const signupData = {
+              fullName,
+              email,
+              username,
+              password,
+              dob,
+              age,
+              phoneNumber,
+              preferred2faMethod: selected2faPreference
+            };
+            tempUserData = signupData;
+            const result = await sendOTPEmail('signup-otp', signupData);
+            if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Create Account'; }
+
+            if (result && result.success) {
+              pendingVerificationEmail = email;
+              pendingVerificationPhone = phoneNumber;
+              activeDeliveryMethod = selected2faPreference;
+
+              // Configure tabs
+              if (otpDeliverySmsBtn) {
+                if (!pendingVerificationPhone) {
+                  otpDeliverySmsBtn.classList.add('disabled');
+                } else {
+                  otpDeliverySmsBtn.classList.remove('disabled');
+                }
+              }
+
+              // Highlight active tab
+              if (activeDeliveryMethod === 'sms') {
+                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.add('active');
+                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.remove('active');
+                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your mobile number (${pendingVerificationPhone}).`;
+              } else {
+                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.add('active');
+                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.remove('active');
+                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your email address (${pendingVerificationEmail}).`;
+              }
+
+              isSignUpVerification = true;
+              isForgotVerification = false;
+              startResendTimer();
+              if (otpModal) otpModal.classList.add('active');
+            }
+          } catch (err) {
+            if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Create Account'; }
+            alert(err.message);
           }
         }
+      });
+    }
 
-        if (!user) {
-          // Create dummy user with this username (fallback behavior)
-          user = {
-            fullName: 'Hi-Hubble User',
-            email: 'ansoceanversetechnologies@gmail.com',
-            username: usernameVal || 'hihubble',
-            dob: '1990-01-01',
-            age: 30,
-            password: 'password'
-          };
-          localStorage.setItem('invibeUser', JSON.stringify(user));
-        }
+  } // end wireEventListeners
 
-        if (user.username.toLowerCase() !== usernameVal.toLowerCase()) {
-          alert("This username is not registered.");
-          return;
-        }
+} // end initAuth
 
-        pendingVerificationEmail = user.email || 'ansoceanversetechnologies@gmail.com';
-        isSignUpVerification = false;
-        isForgotVerification = true;
-        tempNewPassword = passwordVal;
 
-        if (otpErrorMsg) otpErrorMsg.textContent = '';
-        otpInputs.forEach(input => input.value = '');
-
-        createAccountBtn.disabled = true;
-        createAccountBtn.textContent = "Sending OTP...";
-
-        const sent = await sendOTPEmail(pendingVerificationEmail);
-        createAccountBtn.disabled = false;
-        createAccountBtn.textContent = "Reset Password";
-
-        if (sent) {
-          startResendTimer();
-          if (otpModal) otpModal.classList.add('active');
-        }
-      } else {
-        // Sign up flow
-        const fullName = document.getElementById('auth-fullname').value;
-        const email = document.getElementById('auth-email').value;
-        const username = document.getElementById('auth-username').value;
-        const password = document.getElementById('auth-password').value;
-        const dob = document.getElementById('auth-dob').value;
-        
-        const today = new Date();
-        const dobDate = new Date(dob);
-        let age = today.getFullYear() - dobDate.getFullYear();
-        const m = today.getMonth() - dobDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) age--;
-
-        tempUserData = {
-          fullName,
-          email,
-          username,
-          password,
-          dob,
-          age
-        };
-        
-        pendingVerificationEmail = email;
-        isSignUpVerification = true;
-        isForgotVerification = false;
-
-        if (otpErrorMsg) otpErrorMsg.textContent = '';
-        otpInputs.forEach(input => input.value = '');
-
-        createAccountBtn.disabled = true;
-        createAccountBtn.textContent = "Sending OTP...";
-
-        const sent = await sendOTPEmail(email);
-        createAccountBtn.disabled = false;
-        createAccountBtn.textContent = "Create Account";
-
-        if (sent) {
-          startResendTimer();
-          if (otpModal) otpModal.classList.add('active');
-        }
-      }
-    });
-  }
-
-  // Profile Upload Logic
-  initProfileUpload();
-}
-
+// ─── PROFILE UPLOAD / LIVENESS CAPTURE ─────────────────────────────────────
 function initProfileUpload() {
   const modal = document.getElementById('profile-upload-modal');
   const cameraVideo = document.getElementById('camera-video');
   const cameraCanvas = document.getElementById('camera-canvas');
   const captureBtn = document.getElementById('capture-photo-btn');
-  
   const previewContainer = document.getElementById('profile-preview-container');
   const previewImg = document.getElementById('profile-preview-img');
   const removeImgBtn = document.getElementById('remove-profile-img');
   const finishBtn = document.getElementById('finish-profile-btn');
-
-  // Scanning guides
   const faceGuide = document.querySelector('.camera-face-guide');
   const scannerLine = document.querySelector('.camera-scanner-line');
   const scanningGrid = document.querySelector('.camera-scanning-grid');
@@ -763,168 +796,172 @@ function initProfileUpload() {
 
   let stream = null;
 
-  // Function to start camera
   async function startLiveCamera() {
     try {
-      if (livenessText) livenessText.textContent = "INITIALIZING CAMERA...";
-      stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: { ideal: 640 },
-          height: { ideal: 640 },
-          facingMode: 'user' 
-        } 
+      if (livenessText) livenessText.textContent = 'INITIALIZING CAMERA…';
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: 'user', frameRate: { ideal: 60, min: 30 } }
       });
       if (cameraVideo) {
         cameraVideo.srcObject = stream;
-        if (livenessText) livenessText.textContent = "LIVENESS CHECK READY";
+        if (livenessText) livenessText.textContent = 'LIVENESS CHECK READY';
       }
     } catch (err) {
-      console.error("Camera access error:", err);
-      alert("Strict Live Camera access is required to complete profile setup. Please enable camera access.");
-      if (livenessText) livenessText.textContent = "CAMERA ERROR";
+      console.error('Camera access error:', err);
+      if (livenessText) livenessText.textContent = 'CAMERA ERROR';
+      alert('Camera access required. Please enable camera permissions and try again.');
     }
   }
 
-  // Function to stop camera
   function stopLiveCamera() {
     if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+      stream.getTracks().forEach(t => t.stop());
       stream = null;
     }
     if (cameraVideo) cameraVideo.srcObject = null;
   }
 
-  // Make startLiveCamera globally referenceable
   window.startLiveCamera = startLiveCamera;
 
-  // Capture photo with simulated liveness scan stages
   if (captureBtn) {
     captureBtn.addEventListener('click', async () => {
-      if (!stream) {
-        alert("Camera stream is not active.");
-        return;
-      }
+      if (!stream) { alert('Camera stream is not active.'); return; }
 
       captureBtn.disabled = true;
-
       if (faceGuide) faceGuide.classList.add('scanning');
       if (scannerLine) scannerLine.classList.add('scanning');
       if (scanningGrid) scanningGrid.classList.add('scanning');
 
       const scanStages = [
-        { text: "SCANNING FACE DEPTH...", delay: 500 },
-        { text: "DETECTING MICRO-MOVEMENTS...", delay: 1000 },
-        { text: "VERIFYING BLINK & REFLECTIONS...", delay: 1600 },
-        { text: "LIVENESS CHECKS PASSED!", delay: 2000 }
+        { text: 'SCANNING FACE DEPTH…', delay: 500 },
+        { text: 'DETECTING MICRO-MOVEMENTS…', delay: 1000 },
+        { text: 'VERIFYING BLINK & REFLECTIONS…', delay: 1600 },
+        { text: 'LIVENESS CHECKS PASSED!', delay: 2000 }
       ];
 
       for (const stage of scanStages) {
-        await new Promise(r => setTimeout(r, stage.delay - (scanStages[scanStages.indexOf(stage) - 1]?.delay || 0)));
+        const prevDelay = scanStages[scanStages.indexOf(stage) - 1]?.delay || 0;
+        await new Promise(r => setTimeout(r, stage.delay - prevDelay));
         if (livenessText) livenessText.textContent = stage.text;
       }
 
-      // Draw frames to canvas
-      cameraCanvas.width = cameraVideo.videoWidth || 640;
-      cameraCanvas.height = cameraVideo.videoHeight || 640;
-      const ctx = cameraCanvas.getContext('2d');
-      ctx.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
-      
-      const dataUrl = cameraCanvas.toDataURL('image/jpeg');
+      if (cameraCanvas && cameraVideo) {
+        cameraCanvas.width = cameraVideo.videoWidth || 640;
+        cameraCanvas.height = cameraVideo.videoHeight || 640;
+        const ctx = cameraCanvas.getContext('2d');
+        ctx.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
+        const dataUrl = cameraCanvas.toDataURL('image/jpeg');
 
-      if (faceGuide) faceGuide.classList.remove('scanning');
-      if (scannerLine) scannerLine.classList.remove('scanning');
-      if (scanningGrid) scanningGrid.classList.remove('scanning');
+        if (faceGuide) faceGuide.classList.remove('scanning');
+        if (scannerLine) scannerLine.classList.remove('scanning');
+        if (scanningGrid) scanningGrid.classList.remove('scanning');
 
-      previewImg.src = dataUrl;
-      document.getElementById('camera-container').classList.remove('active');
-      previewContainer.style.display = 'block';
-      finishBtn.disabled = false;
+        if (previewImg) previewImg.src = dataUrl;
+        const camContainer = document.getElementById('camera-container');
+        if (camContainer) camContainer.classList.remove('active');
+        if (previewContainer) previewContainer.style.display = 'block';
+        if (finishBtn) finishBtn.disabled = false;
+      }
+
       captureBtn.disabled = false;
-
       stopLiveCamera();
     });
   }
 
   if (removeImgBtn) {
     removeImgBtn.addEventListener('click', () => {
-      previewImg.src = "";
-      previewContainer.style.display = 'none';
-      document.getElementById('camera-container').classList.add('active');
-      finishBtn.disabled = true;
+      if (previewImg) previewImg.src = '';
+      if (previewContainer) previewContainer.style.display = 'none';
+      const camContainer = document.getElementById('camera-container');
+      if (camContainer) camContainer.classList.add('active');
+      if (finishBtn) finishBtn.disabled = true;
       startLiveCamera();
     });
   }
 
-  // Finish Setup
   if (finishBtn) {
-    finishBtn.addEventListener('click', () => {
-      const base64 = previewImg.src;
-      if (!base64) return;
-      
-      localStorage.setItem('invibeProfileImage', base64);
-      localStorage.setItem('invibeIsLoggedIn', 'true');
-      
-      modal.classList.remove('active');
-      const authView = document.getElementById('auth-view');
-      if (authView) authView.classList.add('hidden');
-      
-      setTimeout(() => {
-        if (authView) authView.style.display = 'none';
-        const appContainer = document.getElementById('app-container');
-        if (appContainer) {
-          appContainer.style.display = 'block';
-        }
-        updateAppUI();
-      }, 500);
+    finishBtn.addEventListener('click', async () => {
+      const base64 = previewImg ? previewImg.src : '';
+      if (!base64 || base64 === window.location.href) return; // empty src guard
+
+      finishBtn.disabled = true;
+      finishBtn.textContent = 'Saving...';
+
+      try {
+        const token = localStorage.getItem('invibe_jwt_token');
+        const res = await fetch(`${API_URL}/api/users/profile`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ profileImage: base64 })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to update profile photo.');
+
+        localStorage.setItem('invibeProfileImage', base64);
+        localStorage.setItem('invibeUser', JSON.stringify(data.user));
+
+        if (modal) modal.classList.remove('active');
+        const authView = document.getElementById('auth-view');
+        if (authView) authView.classList.add('hidden');
+
+        setTimeout(() => {
+          if (authView) authView.style.display = 'none';
+          const appContainer = document.getElementById('app-container');
+          if (appContainer) appContainer.style.display = 'block';
+          updateAppUI();
+        }, 500);
+      } catch (err) {
+        console.error('Error updating profileImage:', err);
+        alert(err.message);
+      } finally {
+        finishBtn.disabled = false;
+        finishBtn.textContent = 'Finish & Explore';
+      }
     });
   }
 }
 
+
+// ─── UPDATE APP UI WITH LOGGED-IN USER DATA ──────────────────────────────────
 export function updateAppUI() {
   const userStr = localStorage.getItem('invibeUser');
   const profileImage = localStorage.getItem('invibeProfileImage');
-  
+
   if (!userStr) return;
-  
-  const user = JSON.parse(userStr);
-  
-  // Update Header Avatar
+
+  let user;
+  try { user = JSON.parse(userStr); } catch { return; }
+
+  // Header avatar
   const headerAvatar = document.querySelector('#header-profile-avatar img');
-  if (headerAvatar && profileImage) {
-    headerAvatar.src = profileImage;
-  }
+  if (headerAvatar && profileImage) headerAvatar.src = profileImage;
 
-  // Update Sidebar Preview Card
+  // Sidebar preview card
   const sidebarAvatar = document.querySelector('.profile-preview-avatar img');
-  if (sidebarAvatar && profileImage) {
-    sidebarAvatar.src = profileImage;
-  }
+  if (sidebarAvatar && profileImage) sidebarAvatar.src = profileImage;
   const sidebarName = document.querySelector('.profile-preview-info h3');
-  if (sidebarName) {
-    sidebarName.textContent = user.fullName;
-  }
+  if (sidebarName && user.fullName) sidebarName.textContent = user.fullName;
   const sidebarUsername = document.querySelector('.profile-preview-info p');
-  if (sidebarUsername) {
-    sidebarUsername.textContent = '@' + user.username;
-  }
+  if (sidebarUsername && user.username) sidebarUsername.textContent = '@' + user.username;
 
-  // Update Story "Your Vibe"
+  // Stories "Your Vibe" avatar
   const storyAvatar = document.querySelector('.story-card.current-user .story-avatar-container img');
-  if (storyAvatar && profileImage) {
-    storyAvatar.src = profileImage;
-  }
+  if (storyAvatar && profileImage) storyAvatar.src = profileImage;
 
-  // Update "My Profile" view
-  const myProfileAvatar = document.querySelector('.profile-header-avatar img');
-  if (myProfileAvatar && profileImage) {
-    myProfileAvatar.src = profileImage;
-  }
-  const myProfileName = document.querySelector('.profile-header-info h2');
-  if (myProfileName) {
+  // My Profile view (middle panel)
+  const myProfileAvatar = document.querySelector('.profile-screen-avatar');
+  if (myProfileAvatar && profileImage) myProfileAvatar.src = profileImage;
+  const myProfileName = document.querySelector('.profile-summary-top h3');
+  if (myProfileName && user.fullName) {
     myProfileName.innerHTML = user.fullName + ' <span class="verified-badge"><i data-lucide="check"></i></span>';
+    if (window.debouncedCreateIcons) window.debouncedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
   }
-  const myProfileUsername = document.querySelector('.profile-header-info p.profile-username');
-  if (myProfileUsername) {
-    myProfileUsername.textContent = '@' + user.username;
-  }
+  const myProfileUsername = document.querySelector('.profile-screen-handle');
+  if (myProfileUsername && user.username) myProfileUsername.textContent = '@' + user.username;
+
+  // Dispatch event so that notifications system starts loading
+  window.dispatchEvent(new CustomEvent('auth-changed'));
 }
