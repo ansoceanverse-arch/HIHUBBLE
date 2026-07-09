@@ -2678,16 +2678,20 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${h}:${m}:${s}`;
   }
 
+  let iceCandidateSendPromise = Promise.resolve();
+
   async function sendIceCandidateToServer(callId, candidate, role) {
-    try {
-      await fetch(`${API_URL}/api/calls/ice-candidate`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ callId, candidate, role })
-      });
-    } catch (e) {
-      console.error("Error sending ICE candidate:", e);
-    }
+    iceCandidateSendPromise = iceCandidateSendPromise.then(async () => {
+      try {
+        await fetch(`${API_URL}/api/calls/ice-candidate`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ callId, candidate, role })
+        });
+      } catch (e) {
+        console.error("Error sending ICE candidate:", e);
+      }
+    });
   }
 
   async function initiateVideoCall(recipientId) {
