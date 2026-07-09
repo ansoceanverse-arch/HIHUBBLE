@@ -2560,7 +2560,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const rtcConfig = {
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' }
     ]
   };
 
@@ -2734,9 +2737,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // ICE candidate handler
+        let iceCandidateQueue = [];
         peerConnection.onicecandidate = (event) => {
-          if (event.candidate && currentCallId) {
-            sendIceCandidateToServer(currentCallId, event.candidate, 'caller');
+          if (event.candidate) {
+            if (currentCallId) {
+              sendIceCandidateToServer(currentCallId, event.candidate, 'caller');
+            } else {
+              iceCandidateQueue.push(event.candidate);
+            }
           }
         };
 
@@ -2766,6 +2774,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok) throw new Error("Failed to initiate call on server.");
         const callData = await res.json();
         currentCallId = callData._id || callData.id;
+
+        // Flush queued ICE candidates
+        if (typeof iceCandidateQueue !== 'undefined') {
+          iceCandidateQueue.forEach(cand => {
+            sendIceCandidateToServer(currentCallId, cand, 'caller');
+          });
+          iceCandidateQueue = [];
+        }
       } else {
         // Mock Call initiation on server (just so signaling works for matching UI state)
         const res = await fetch(`${API_URL}/api/calls/initiate`, {
