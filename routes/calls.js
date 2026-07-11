@@ -143,4 +143,32 @@ router.get('/api/calls/:callId/state', authenticateToken, async (req, res) => {
   }
 });
 
+router.get('/api/calls/ice-servers', authenticateToken, async (req, res) => {
+  try {
+    const turnUrl = process.env.TURN_URL;
+    const turnUsername = process.env.TURN_USERNAME;
+    const turnCredential = process.env.TURN_PASSWORD;
+
+    const iceServers = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:stun4.l.google.com:19302' }
+    ];
+
+    if (turnUrl && turnUsername && turnCredential) {
+      iceServers.push({
+        urls: turnUrl,
+        username: turnUsername,
+        credential: turnCredential
+      });
+    }
+
+    res.json({ iceServers });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
