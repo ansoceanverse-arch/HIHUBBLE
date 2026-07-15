@@ -111,7 +111,10 @@
           </div>
           <div class="input-group">
             <i data-lucide="key"></i>
-            <input type="password" id="auth-password" placeholder="Password" required />
+            <input type="password" id="auth-password" class="has-toggle" placeholder="Password" required />
+            <button type="button" class="password-toggle-btn" data-target="auth-password" aria-label="Toggle password visibility">
+              <i data-lucide="eye"></i>
+            </button>
           </div>
           <div class="forgot-link-container signin-only"
             style="width: 100%; display: flex; justify-content: flex-end; margin-top: -8px; margin-bottom: 8px;">
@@ -119,7 +122,10 @@
           </div>
           <div class="input-group forgot-only" style="display: none;">
             <i data-lucide="key"></i>
-            <input type="password" id="auth-confirm-password" placeholder="Confirm Password" />
+            <input type="password" id="auth-confirm-password" class="has-toggle" placeholder="Confirm Password" />
+            <button type="button" class="password-toggle-btn" data-target="auth-confirm-password" aria-label="Toggle password visibility">
+              <i data-lucide="eye"></i>
+            </button>
           </div>
           <div class="input-group date-group signup-only">
             <i data-lucide="calendar"></i>
@@ -297,7 +303,7 @@
               alt="Profile avatar" />
           </div>
           <div class="profile-preview-info">
-            <h3>&nbsp; <span class="verified-badge" style="display:none;"><i data-lucide="check"></i></span></h3>
+            <h3>&nbsp; </h3>
             <p>&nbsp;</p>
             <div class="status-badge" style="display:none;"><span class="pulse-dot"></span>Online</div>
           </div>
@@ -462,7 +468,7 @@
                     src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80"
                     alt="Alex Rivers" class="author-avatar" />
                   <div>
-                    <h4 class="author-name">Alex Rivers <span class="verified-badge"><i data-lucide="check"></i></span>
+                    <h4 class="author-name">Alex Rivers
                     </h4>
                     <div class="post-meta">
                       <span class="post-time">10:30 AM</span>
@@ -522,7 +528,7 @@
               <div class="story-viewer-overlay feed-share-modal">
                 <div class="share-card glass-panel">
                   <div class="modal-header">
-                    <h3>Share to Friends</h3>
+                    <h3>Share to Hubbies</h3>
                     <button class="modal-close-btn"><i data-lucide="x"></i></button>
                   </div>
                   <div class="share-friends-list"></div>
@@ -601,7 +607,7 @@
               <div class="story-viewer-overlay feed-share-modal">
                 <div class="share-card glass-panel">
                   <div class="modal-header">
-                    <h3>Share to Friends</h3>
+                    <h3>Share to Hubbies</h3>
                     <button class="modal-close-btn"><i data-lucide="x"></i></button>
                   </div>
                   <div class="share-friends-list"></div>
@@ -617,7 +623,7 @@
                     src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&h=150&q=80"
                     alt="Sarah Chen" class="author-avatar" />
                   <div>
-                    <h4 class="author-name">Sarah Chen <span class="verified-badge"><i data-lucide="check"></i></span>
+                    <h4 class="author-name">Sarah Chen
                     </h4>
                     <div class="post-meta">
                       <span class="post-time">2 hours ago</span>
@@ -675,7 +681,7 @@
               <div class="story-viewer-overlay feed-share-modal">
                 <div class="share-card glass-panel">
                   <div class="modal-header">
-                    <h3>Share to Friends</h3>
+                    <h3>Share to Hubbies</h3>
                     <button class="modal-close-btn"><i data-lucide="x"></i></button>
                   </div>
                   <div class="share-friends-list"></div>
@@ -748,7 +754,7 @@
               <div class="story-viewer-overlay feed-share-modal">
                 <div class="share-card glass-panel">
                   <div class="modal-header">
-                    <h3>Share to Friends</h3>
+                    <h3>Share to Hubbies</h3>
                     <button class="modal-close-btn"><i data-lucide="x"></i></button>
                   </div>
                   <div class="share-friends-list"></div>
@@ -950,7 +956,7 @@
                 <div class="story-viewer-overlay reel-share-modal">
                   <div class="share-card glass-panel">
                     <div class="modal-header">
-                      <h3>Share to Friends</h3>
+                      <h3>Share to Hubbies</h3>
                       <button class="modal-close-btn"><i data-lucide="x"></i></button>
                     </div>
                     <div class="share-friends-list"></div>
@@ -1019,7 +1025,7 @@
                 <div class="story-viewer-overlay reel-share-modal">
                   <div class="share-card glass-panel">
                     <div class="modal-header">
-                      <h3>Share to Friends</h3>
+                      <h3>Share to Hubbies</h3>
                       <button class="modal-close-btn"><i data-lucide="x"></i></button>
                     </div>
                     <div class="share-friends-list"></div>
@@ -1205,13 +1211,7 @@
                     </div>
                   </div>
 
-                  <!-- Smart Replies chips -->
-                  <div class="smart-replies-row">
-                    <span class="sparkle-hint"><i data-lucide="sparkles"></i> AI Replies:</span>
-                    <button class="reply-chip">Sure! Let's do it</button>
-                    <button class="reply-chip">What do you suggest?</button>
-                    <button class="reply-chip">Let me check</button>
-                  </div>
+                  <!-- Smart Replies chips removed -->
                 </div>
 
 
@@ -1314,7 +1314,7 @@
 
                 <!-- Bottom attachments action grid mimicking image 2 bottom tray -->
                 <div class="chat-attachment-grid" id="chat-attachments-drawer">
-                  <button class="attachment-action-btn" data-open-mode="media"><i
+                  <button class="attachment-action-btn" id="attachment-btn-picker"><i
                       data-lucide="paperclip"></i><span>Attachment</span></button>
                   <button class="attachment-action-btn" id="camera-click-sim"><i
                       data-lucide="camera"></i><span>Camera</span></button>
@@ -1322,10 +1322,17 @@
                       Note</span></button>
                   <button class="attachment-action-btn" id="loc-click-sim"><i
                       data-lucide="map-pin"></i><span>Location</span></button>
-                  <button class="attachment-action-btn bg-sparkle-btn" id="ai-click-sim"><i
-                      data-lucide="sparkles"></i><span>AI Assistant</span></button>
-                  <button class="attachment-action-btn" data-open-mode="media"><i
+                  <button class="attachment-action-btn" id="files-btn-picker"><i
                       data-lucide="folder"></i><span>Files</span></button>
+                </div>
+
+                <!-- Reply Preview Container -->
+                <div class="chat-reply-preview" id="chat-reply-preview-container" style="display: none;">
+                  <div class="reply-preview-content">
+                    <span class="reply-preview-sender" id="reply-preview-sender"></span>
+                    <span class="reply-preview-text" id="reply-preview-text"></span>
+                  </div>
+                  <button class="reply-preview-close" id="reply-preview-close-btn"><i data-lucide="x"></i></button>
                 </div>
 
                 <!-- Input message field -->
@@ -1351,10 +1358,24 @@
                       </div>
                       <div class="emoji-picker-grid" id="emoji-picker-grid"></div>
                     </div>
+                    <!-- AI Spelling Assistant Popover -->
+                    <div class="ai-spelling-popover" id="ai-spelling-popover">
+                      <div class="ai-spelling-header">
+                        <i data-lucide="sparkles"></i>
+                        <span>AI Assistant</span>
+                      </div>
+                      <div class="ai-spelling-content" id="ai-spelling-content"></div>
+                      <div class="ai-spelling-actions" id="ai-spelling-actions">
+                        <button class="ai-spelling-btn-accept" id="ai-spelling-accept-btn">Accept</button>
+                        <button class="ai-spelling-btn-cancel" id="ai-spelling-cancel-btn">Cancel</button>
+                      </div>
+                    </div>
                     <input type="text" placeholder="Message..." id="chat-message-input" />
                     <input type="file" id="chat-camera-file-input" style="display:none;" accept="image/*" />
                     <input type="file" id="chat-gallery-file-input" style="display:none;"
                       accept="image/*,video/*,audio/*,application/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" />
+                    <input type="file" id="attachment-file-input" style="display:none;" />
+                    <input type="file" id="attachment-doc-input" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" />
                     <button class="chat-emoji-picker-btn" id="chat-smile-btn" title="Insert Emoji"><i
                         data-lucide="smile"></i></button>
                     <button class="chat-photo-picker-btn" id="chat-img-picker-btn" title="Open Camera"><i
@@ -1363,6 +1384,8 @@
                         data-lucide="image"></i></button>
                     <button class="chat-voice-picker-btn" id="chat-mic-input-btn" title="Voice Note"><i
                         data-lucide="mic"></i></button>
+                    <button class="chat-ai-assistant-btn chat-photo-picker-btn" id="chat-ai-assistant-btn" title="AI Spelling Assistant"><i
+                        data-lucide="sparkles"></i></button>
                   </div>
                   <button class="chat-send-btn" id="chat-send-msg-btn"><i data-lucide="send"></i></button>
                 </div>
@@ -1440,6 +1463,9 @@
                 <button class="profile-content-tab" data-profile-tab="reels">
                   <i data-lucide="video"></i> Reels
                 </button>
+                <button class="profile-content-tab" data-profile-tab="saved">
+                  <i data-lucide="bookmark"></i> Saved Hubbs
+                </button>
               </div>
 
               <div class="profile-grids-viewport">
@@ -1447,6 +1473,8 @@
                 <div class="profile-grid active" id="profile-vibes-grid"></div>
                 <!-- Reels Grid -->
                 <div class="profile-grid" id="profile-reels-grid"></div>
+                <!-- Saved Hubbs Grid -->
+                <div class="profile-grid" id="profile-saved-grid"></div>
               </div>
             </div>
           </div>
@@ -2045,7 +2073,7 @@
   <div id="share-modal" class="story-viewer-overlay">
     <div class="share-card glass-panel">
       <div class="modal-header">
-        <h3>Share to Friends</h3>
+        <h3>Share to Hubbies</h3>
         <button class="modal-close-btn"><i data-lucide="x"></i></button>
       </div>
       <div class="share-friends-list"></div>
@@ -2130,6 +2158,43 @@
   </div>
 
   <script type="module" src="/src/main.js"></script>
+  <!-- FORWARD MESSAGE MODAL -->
+  <div id="forward-message-modal" class="auth-modal">
+    <div class="auth-modal-content glass-panel" style="max-width: 400px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 15px;">
+        <h3 style="margin: 0; font-size: 1.1rem; color: #fff;">Forward Message</h3>
+        <button id="forward-close-btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer;"><i data-lucide="x"></i></button>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <input type="text" id="forward-search-input" placeholder="Search contacts..." style="width: 100%; padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: #fff; font-size: 0.9rem;">
+      </div>
+      <div id="forward-contacts-list" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
+        <!-- Populated via JS -->
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button id="forward-cancel-btn" style="padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.1); border: none; color: #fff; cursor: pointer; font-size: 0.9rem;">Cancel</button>
+        <button id="forward-send-btn" class="btn-primary" style="padding: 8px 20px; font-size: 0.9rem;" disabled>Forward</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Message Modal -->
+  <div id="delete-message-modal" class="auth-modal">
+    <div class="auth-modal-content glass-panel" style="max-width: 350px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 15px;">
+        <h3 style="margin: 0; font-size: 1.1rem; color: #fff;">Delete Message</h3>
+        <button id="delete-close-btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer;"><i data-lucide="x"></i></button>
+      </div>
+      <div style="margin-bottom: 20px;">
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin: 0;">Are you sure you want to delete this message?</p>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button id="delete-cancel-btn" style="padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.1); border: none; color: #fff; cursor: pointer; font-size: 0.9rem;">Cancel</button>
+        <button id="delete-confirm-btn" class="btn-primary" style="padding: 8px 20px; font-size: 0.9rem; background: #ff4d4f; color: white; border: none;">Delete</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 </html>

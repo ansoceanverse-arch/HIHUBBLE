@@ -1221,3 +1221,43 @@
   border-color: var(--primary, #8a5cff);
   box-shadow: 0 0 10px rgba(108, 59, 255, 0.25);
 }
+
+/* Password visibility toggle button styling */
+.password-toggle-btn {
+  position: absolute;
+  right: 16px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.25s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 10;
+}
+
+.password-toggle-btn:hover {
+  color: #fff;
+  transform: scale(1.15);
+}
+
+.password-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.password-toggle-btn i,
+.password-toggle-btn svg {
+  position: static !important;
+  left: auto !important;
+  color: inherit !important;
+  display: block !important;
+  width: 18px !important;
+  height: 18px !important;
+  transition: transform 0.15s ease !important;
+}
+
+.input-group input.has-toggle {
+  padding-right: 48px !important;
+}

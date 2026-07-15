@@ -113,4 +113,39 @@ router.post('/api/chats/:userId/read', authenticateToken, async (req, res) => {
   }
 });
 
+router.delete('/api/chats/message/:msgId', authenticateToken, async (req, res) => {
+  try {
+    const msgId = req.params.msgId;
+    const currentUserId = req.user.id;
+
+    const { data: message, error: fetchError } = await supabase.from('messages')
+      .select('sender')
+      .eq('_id', msgId)
+      .single();
+
+    if (fetchError) {
+      console.error("Supabase fetch error:", fetchError);
+      return res.status(500).json({ error: fetchError.message, details: fetchError });
+    }
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+    if (message.sender.toString() !== currentUserId.toString()) {
+      return res.status(403).json({ error: 'Unauthorized to delete this message' });
+    }
+
+    const { error: deleteError } = await supabase.from('messages')
+      .delete()
+      .eq('_id', msgId);
+
+    if (deleteError) {
+      console.error("Supabase delete error:", deleteError);
+      return res.status(500).json({ error: deleteError.message, details: deleteError });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Server error:", err);
+    res.status(500).json({ error: err.message, details: err });
+  }
+});
+
 export default router;

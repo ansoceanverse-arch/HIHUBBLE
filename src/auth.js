@@ -1,6 +1,13 @@
-// Express backend URL — on Vite dev (5173) we still hit Express on 3000
-const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://localhost:3000'
+const API_URL = (
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1' ||
+  window.location.hostname === '[::1]' ||
+  window.location.hostname === '::1' ||
+  window.location.hostname.startsWith('192.168.') ||
+  window.location.hostname.startsWith('10.') ||
+  window.location.hostname.startsWith('172.') ||
+  window.location.hostname.endsWith('.local')
+) ? `${window.location.protocol}//${window.location.hostname}:3000`
   : window.location.origin;
 
 // LocalStorage User Database Helper Functions
@@ -774,6 +781,42 @@ export function initAuth() {
       });
     }
 
+    // Password visibility toggle logic with smooth scale/pop animation
+    const passwordToggleButtons = document.querySelectorAll('.password-toggle-btn');
+    passwordToggleButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const targetId = btn.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        if (!input) return;
+        
+        const icon = btn.querySelector('i, svg');
+        if (input.type === 'password') {
+          input.type = 'text';
+          if (icon) icon.setAttribute('data-lucide', 'eye-off');
+          btn.style.color = '#a78bfa'; // violet accent color when visible
+        } else {
+          input.type = 'password';
+          if (icon) icon.setAttribute('data-lucide', 'eye');
+          btn.style.color = 'rgba(255,255,255,0.5)';
+        }
+        
+        // Animated icon pop effect
+        if (icon) {
+          icon.style.transition = 'transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+          icon.style.transform = 'scale(1.25) rotate(8deg)';
+          setTimeout(() => {
+            icon.style.transform = 'scale(1) rotate(0deg)';
+          }, 150);
+        }
+        
+        if (window.debouncedCreateIcons) window.debouncedCreateIcons();
+        else if (window.lucide) window.lucide.createIcons();
+      });
+    });
+
   } // end wireEventListeners
 
 } // end initAuth
@@ -956,7 +999,7 @@ export function updateAppUI() {
   if (myProfileAvatar && profileImage) myProfileAvatar.src = profileImage;
   const myProfileName = document.querySelector('.profile-summary-top h3');
   if (myProfileName && user.fullName) {
-    myProfileName.innerHTML = user.fullName + ' <span class="verified-badge"><i data-lucide="check"></i></span>';
+    myProfileName.innerHTML = user.fullName;
     if (window.debouncedCreateIcons) window.debouncedCreateIcons(); else if (window.lucide) window.lucide.createIcons();
   }
   const myProfileUsername = document.querySelector('.profile-screen-handle');

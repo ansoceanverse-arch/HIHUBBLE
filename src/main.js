@@ -3,12 +3,22 @@ import './auth.css'
 import { initAuth } from './auth.js'
 
 document.addEventListener('DOMContentLoaded', () => {
-  const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3000'
+  const API_URL = (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '[::1]' ||
+    window.location.hostname === '::1' ||
+    window.location.hostname.startsWith('192.168.') ||
+    window.location.hostname.startsWith('10.') ||
+    window.location.hostname.startsWith('172.') ||
+    window.location.hostname.endsWith('.local')
+  ) ? `${window.location.protocol}//${window.location.hostname}:3000`
     : window.location.origin;
 
+  window.savedHubbs = window.savedHubbs || [];
+
   initAuth();
-  
+
   // Initialize Lucide Icons (Debounced for performance)
   let iconRenderQueued = false;
   const debouncedCreateIcons = () => {
@@ -102,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function switchView(viewName, userId) {
     if (!viewName) return;
-    
+
     state.activeView = viewName;
 
     if (viewName === 'profile') {
@@ -113,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadUserProfile(targetId);
       }
     }
-    
+
     // Toggle body active class to hide right sidebar and expand content width (Congestion Fix!)
     if (viewName === 'chats') {
       document.body.classList.add('chats-view-active');
@@ -131,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       document.body.classList.remove('chats-view-active');
     }
-    
+
     // Update active view panels
     viewPanels.forEach(panel => {
       if (panel.id === `view-${viewName}`) {
@@ -184,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
+
     // Close radial menu after selection
     closeRadialMenu();
   }
@@ -260,20 +270,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Track whether the menu was open when the interaction started
     wasOpenOnDragStart = navContainer.classList.contains('open');
-    
+
     isDragging = false;
     const coords = getDragCoords(e);
     dragStartX = coords.x;
     dragStartY = coords.y;
-    
+
     const rect = navContainer.getBoundingClientRect();
     bubbleStartX = rect.left;
     bubbleStartY = rect.top;
-    
+
     // Disable styling transitions during active drag coordinate movement
     navContainer.style.transition = 'none';
     navContainer.classList.add('dragging');
-    
+
     document.addEventListener('mousemove', dragMove);
     document.addEventListener('mouseup', dragEnd);
     document.addEventListener('touchmove', dragMove, { passive: false });
@@ -285,13 +295,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const coords = getDragCoords(e);
     const deltaX = coords.x - dragStartX;
     const deltaY = coords.y - dragStartY;
-    
+
     // 5px threshold to separate simple clicks from drags
     if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
       isDragging = true;
       if (e.type === 'touchmove') e.preventDefault(); // Prevent double scroll in mobile
     }
-    
+
     if (isDragging && !dragMoveTicking) {
       dragMoveTicking = true;
       window.requestAnimationFrame(() => {
@@ -304,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
           navContainer.style.left = `${bubbleStartX}px`;
           navContainer.style.top = `${bubbleStartY}px`;
         }
-        
+
         // Use hardware-accelerated transform for 60FPS smooth dragging
         navContainer.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
         dragMoveTicking = false;
@@ -317,10 +327,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.removeEventListener('mouseup', dragEnd);
     document.removeEventListener('touchmove', dragMove);
     document.removeEventListener('touchend', dragEnd);
-    
+
     navContainer.classList.remove('dragging');
     navContainer.style.transition = '';
-    
+
     if (isDragging) {
       // Commit the translation to left/top to preserve position correctly
       const rect = navContainer.getBoundingClientRect();
@@ -328,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
       navContainer.style.left = `${rect.left}px`;
       navContainer.style.top = `${rect.top}px`;
     }
-    
+
     if (!isDragging) {
       // True toggle: if menu was open when click started, close it; otherwise open it
       if (wasOpenOnDragStart) {
@@ -343,7 +353,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       // Clamp boundaries inside screen coordinates with 20px padding
       clampBubblePosition();
-      showToast('Navigation bubble repositioned! ⚓');
     }
   }
 
@@ -362,12 +371,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const pad = 20;
     let targetX = rect.left;
     let targetY = rect.top;
-    
+
     if (targetX < pad) targetX = pad;
     if (targetX > window.innerWidth - rect.width - pad) targetX = window.innerWidth - rect.width - pad;
     if (targetY < pad) targetY = pad;
     if (targetY > window.innerHeight - rect.height - pad) targetY = window.innerHeight - rect.height - pad;
-    
+
     navContainer.style.left = `${targetX}px`;
     navContainer.style.top = `${targetY}px`;
     navContainer.style.transform = 'none'; // Lock translate off!
@@ -394,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rect = navContainer.getBoundingClientRect();
     const centerY = rect.top + rect.height / 2;
     const centerX = rect.left + rect.width / 2;
-    
+
     // Vertical flip: if in top half of the screen, pop sub-bubbles downwards
     if (centerY < window.innerHeight / 2) {
       navContainer.style.setProperty('--radial-y-dir', '1');
@@ -403,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
       navContainer.style.setProperty('--radial-y-dir', '-1');
       navContainer.classList.remove('expand-downwards');
     }
-    
+
     // Horizontal mirror: if too close to left or right edges
     if (centerX < 180) {
       navContainer.style.setProperty('--radial-x-dir', '1.2'); // push rightwards
@@ -415,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navContainer.classList.add('open');
     blurOverlay.classList.add('active'); // Localized circular blur active
-    
+
     // Rotate HiHubble logo icon
     const logoIcon = mainBubble.querySelector('.orb-logo-icon');
     if (logoIcon) {
@@ -426,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeRadialMenu() {
     navContainer.classList.remove('open');
     blurOverlay.classList.remove('active');
-    
+
     const logoIcon = mainBubble.querySelector('.orb-logo-icon');
     if (logoIcon) {
       logoIcon.style.transform = 'rotate(0deg) scale(1)';
@@ -481,23 +490,23 @@ document.addEventListener('DOMContentLoaded', () => {
       startX = e.pageX - storiesScroll.offsetLeft;
       scrollLeft = storiesScroll.scrollLeft;
     });
-    
+
     storiesScroll.addEventListener('mouseleave', () => {
       isDown = false;
     });
-    
+
     storiesScroll.addEventListener('mouseup', () => {
       isDown = false;
     });
-    
+
     let storiesTicking = false;
     storiesScroll.addEventListener('mousemove', (e) => {
-      if(!isDown) return;
+      if (!isDown) return;
       e.preventDefault();
       if (!storiesTicking) {
         storiesTicking = true;
         const x = e.pageX - storiesScroll.offsetLeft;
-        const walk = (x - startX) * 2.5; 
+        const walk = (x - startX) * 2.5;
         window.requestAnimationFrame(() => {
           storiesScroll.scrollLeft = scrollLeft - walk;
           storiesTicking = false;
@@ -511,29 +520,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const mediaContainers = document.querySelectorAll('.post-media-container');
 
   function triggerHeartExplosion(x, y, container) {
-    const particleCount = 10;
-    const colors = ['#6C3BFF', '#8A5CFF', '#a855f7', '#c084fc', '#e9d5ff'];
-    
+    const particleCount = 15;
+    const colors = ['#6C3BFF', '#8A5CFF', '#a855f7', '#c084fc', '#e9d5ff', '#ff3b30'];
+
     for (let i = 0; i < particleCount; i++) {
       const particle = document.createElement('div');
       particle.className = 'explosion-particle';
-      particle.innerHTML = '💜';
-      
+      particle.innerHTML = i === 0 ? '<i data-lucide="heart" style="fill: var(--primary); stroke: var(--primary);"></i>' : '💜';
+
       const angle = Math.random() * Math.PI * 2;
-      const distance = 40 + Math.random() * 80;
+      const distance = i === 0 ? 0 : 50 + Math.random() * 120;
       const randomX = Math.cos(angle) * distance;
-      const randomY = Math.sin(angle) * distance - 20; 
-      
+      const randomY = Math.sin(angle) * distance - 40;
+
       particle.style.setProperty('--x', `${randomX}px`);
       particle.style.setProperty('--y', `${randomY}px`);
       particle.style.left = `${x}px`;
       particle.style.top = `${y}px`;
-      
+
       particle.style.color = colors[Math.floor(Math.random() * colors.length)];
-      particle.style.fontSize = `${10 + Math.random() * 14}px`;
-      
+      particle.style.fontSize = i === 0 ? '100px' : `${40 + Math.random() * 40}px`;
+
       container.appendChild(particle);
-      
+      if (i === 0 && window.lucide) { window.lucide.createIcons(); }
+
       setTimeout(() => {
         particle.remove();
       }, 800);
@@ -543,19 +553,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function toggleLike(postId, buttonWrapper, clickX, clickY, container) {
     const postStateKey = `post${postId}`;
     const isCurrentlyLiked = state.isLiked[postStateKey];
-    
+
     const countSpan = buttonWrapper.querySelector('.action-count');
     const heartBtn = buttonWrapper.querySelector('.action-circle-btn');
-    
+
     if (!isCurrentlyLiked) {
       state.isLiked[postStateKey] = true;
       state.likesCount[postStateKey]++;
       buttonWrapper.classList.add('liked');
-      
+
       if (countSpan) {
         countSpan.textContent = formatCount(state.likesCount[postStateKey]);
       }
-      
+
       if (clickX !== null && clickY !== null && container) {
         triggerHeartExplosion(clickX, clickY, container);
       } else if (container) {
@@ -567,7 +577,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.isLiked[postStateKey] = false;
       state.likesCount[postStateKey]--;
       buttonWrapper.classList.remove('liked');
-      
+
       if (countSpan) {
         countSpan.textContent = formatCount(state.likesCount[postStateKey]);
       }
@@ -589,20 +599,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const video = videoPost.querySelector('.post-media-video');
     const playOverlay = videoPost.querySelector('.video-play-overlay');
     const playIcon = playOverlay.querySelector('i');
-    
-    playOverlay.addEventListener('click', () => {
-      if (video.paused) {
-        video.play();
-        playIcon.setAttribute('data-lucide', 'pause');
-        playOverlay.style.background = 'rgba(0,0,0,0)';
-        playOverlay.style.opacity = '0';
-      } else {
+
+    playOverlay.addEventListener('click', (e) => {
+      e.stopPropagation();
+      video.play();
+      playOverlay.style.display = 'none';
+      debouncedCreateIcons();
+    });
+
+    video.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!video.paused) {
         video.pause();
         playIcon.setAttribute('data-lucide', 'play');
+        playOverlay.style.display = 'flex';
         playOverlay.style.background = 'rgba(0,0,0,0.25)';
         playOverlay.style.opacity = '1';
+        debouncedCreateIcons();
       }
-      debouncedCreateIcons();
     });
   }
 
@@ -616,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
     pill.addEventListener('click', () => {
       exTabPills.forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
-      
+
       const tabName = pill.getAttribute('data-ex-tab');
       if (tabName === 'reels') {
         exploreReelsContainer.classList.add('active');
@@ -651,20 +665,41 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bookmarkBtn) {
       e.preventDefault();
       e.stopPropagation();
-      
+
       // Some templates use the inner button, some use the wrapper. Find the wrapper and the icon.
       const btnEl = bookmarkBtn.classList.contains('bookmark-btn') ? bookmarkBtn : (bookmarkBtn.querySelector('.bookmark-btn') || bookmarkBtn);
       const icon = btnEl.querySelector('i, svg') || bookmarkBtn.querySelector('i, svg');
-      
+
+      const mediaContainer = bookmarkBtn.closest('.feed-card, .reel-card, .post-media-container') || bookmarkBtn.closest('article, .post-media-container');
+      let mediaData = null;
+      if (mediaContainer) {
+        const id = mediaContainer.id || mediaContainer.getAttribute('data-post-id') || mediaContainer.getAttribute('data-reel-id') || Math.random().toString();
+        const img = mediaContainer.querySelector('img');
+        const video = mediaContainer.querySelector('video');
+        if (img) mediaData = { id, type: 'image', url: img.src };
+        else if (video) mediaData = { id, type: 'video', url: video.src };
+      }
+
       const isSaved = btnEl.classList.contains('saved');
       if (isSaved) {
         btnEl.classList.remove('saved');
         if (icon) { icon.style.fill = 'none'; icon.style.stroke = ''; }
+        if (mediaData) {
+          window.savedHubbs = window.savedHubbs.filter(s => s.id !== mediaData.id);
+        }
         showToast('Removed from Saved');
       } else {
         btnEl.classList.add('saved');
         if (icon) { icon.style.fill = '#FBBF24'; icon.style.stroke = '#FBBF24'; }
+        if (mediaData && !window.savedHubbs.find(s => s.id === mediaData.id)) {
+          window.savedHubbs.push(mediaData);
+        }
         showToast('Saved to collection ⭐');
+      }
+
+      const savedGrid = document.getElementById('profile-saved-grid');
+      if (savedGrid && savedGrid.classList.contains('active')) {
+        renderSavedHubbs();
       }
     }
   });
@@ -679,10 +714,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const storyViewerTime = document.getElementById('story-viewer-time');
   const storyViewerImg = document.getElementById('story-viewer-img');
   const storyProgressBars = document.getElementById('story-progress-bars');
-  
+
   const storyPrev = document.getElementById('story-prev-btn');
   const storyNext = document.getElementById('story-next-btn');
-  
+
   function openStoryViewer(index) {
     state.activeStoryIndex = index;
     storyViewer.classList.add('active');
@@ -695,7 +730,7 @@ document.addEventListener('DOMContentLoaded', () => {
       closeStoryViewer();
       return;
     }
-    
+
     storyViewerAvatar.src = data.avatar;
     storyViewerName.textContent = data.name;
     storyViewerTime.textContent = data.time;
@@ -703,7 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update like button state
     updateStoryLikeUI(data.isLiked || false, data.likesCount || 0);
-    
+
     // Reset/Re-build Progress Bars
     storyProgressBars.innerHTML = '';
     for (let i = 0; i < state.stories.length; i++) {
@@ -711,30 +746,30 @@ document.addEventListener('DOMContentLoaded', () => {
       barWrapper.className = 'story-progress-bar-wrapper';
       const barFill = document.createElement('div');
       barFill.className = 'story-progress-bar-fill';
-      
+
       if (i < index) {
         barFill.style.width = '100%';
       } else if (i > index) {
         barFill.style.width = '0%';
       }
-      
+
       barWrapper.appendChild(barFill);
       storyProgressBars.appendChild(barWrapper);
     }
-    
+
     startStoryTimer();
   }
 
   function startStoryTimer() {
     stopStoryTimer();
     state.storyProgressPercent = 0;
-    
+
     const activeFill = storyProgressBars.children[state.activeStoryIndex].querySelector('.story-progress-bar-fill');
-    
+
     state.storyProgressInterval = setInterval(() => {
       state.storyProgressPercent += 0.4; // 0.4 * 250 ticks = 100% (5000ms total)
       if (activeFill) activeFill.style.width = `${state.storyProgressPercent}%`;
-      
+
       if (state.storyProgressPercent >= 100) {
         stopStoryTimer();
         // Go to next story
@@ -959,15 +994,15 @@ document.addEventListener('DOMContentLoaded', () => {
               mediaType: 'image'
             })
           })
-          .then(res => res.json())
-          .then(newStory => {
-            loadStories();
-            showToast('New story published successfully! 📸✨');
-          })
-          .catch(err => {
-            console.error(err);
-            showToast('Failed to publish story.');
-          });
+            .then(res => res.json())
+            .then(newStory => {
+              loadStories();
+              showToast('New story published successfully! 📸✨');
+            })
+            .catch(err => {
+              console.error(err);
+              showToast('Failed to publish story.');
+            });
         };
         reader.readAsDataURL(file);
       }
@@ -1114,18 +1149,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function rollLudoDice() {
     if (state.isLudoRolling) return;
-    
+
     state.isLudoRolling = true;
     diceFace.classList.add('rolling');
     showToast('Rolling dice... 🎲');
-    
+
     setTimeout(() => {
       diceFace.classList.remove('rolling');
       const rolledNumber = Math.floor(Math.random() * 6) + 1;
-      
+
       // Update Dots Layout
       updateDiceFaceDots(rolledNumber);
-      
+
       // Log Action
       const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const myLine = document.createElement('div');
@@ -1133,16 +1168,16 @@ document.addEventListener('DOMContentLoaded', () => {
       myLine.innerHTML = `🎲 <strong>You rolled a ${rolledNumber}!</strong> <span class="log-time">${time}</span>`;
       ludoChatFeed.appendChild(myLine);
       ludoChatFeed.scrollTop = ludoChatFeed.scrollHeight;
-      
+
       // Party spark if rolled 6!
       if (rolledNumber === 6) {
         showToast('🎲 SIX! Roll again! 🎉');
         triggerConfettiAlert();
       }
-      
+
       // Emma simulated reply after 1.2s
       simulateEmmaRoll();
-      
+
       state.isLudoRolling = false;
     }, 600);
   }
@@ -1157,7 +1192,7 @@ document.addEventListener('DOMContentLoaded', () => {
       5: ['dot-top-left', 'dot-top-right', 'dot-center', 'dot-bottom-left', 'dot-bottom-right'],
       6: ['dot-top-left', 'dot-top-right', 'dot-mid-left', 'dot-mid-right', 'dot-bottom-left', 'dot-bottom-right']
     };
-    
+
     const classes = dotsConfigs[num] || ['dot-center'];
     classes.forEach(c => {
       const dot = document.createElement('div');
@@ -1170,14 +1205,14 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       const emmaNum = Math.floor(Math.random() * 6) + 1;
       const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
+
       const emmaLine = document.createElement('div');
       emmaLine.className = 'chat-log-line';
       emmaLine.innerHTML = `🎲 <strong>Emma rolled a ${emmaNum}!</strong> <span class="log-time">${time}</span>`;
-      
+
       const emmaSpeak = document.createElement('div');
       emmaSpeak.className = 'chat-log-line';
-      
+
       if (emmaNum === 6) {
         emmaSpeak.innerHTML = `💬 <strong>Emma:</strong> Yes! Ludo token out! 🥳`;
       } else if (emmaNum < 3) {
@@ -1185,7 +1220,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         emmaSpeak.innerHTML = `💬 <strong>Emma:</strong> Rolling coordinates are locked! 🚀`;
       }
-      
+
       ludoChatFeed.appendChild(emmaLine);
       ludoChatFeed.appendChild(emmaSpeak);
       ludoChatFeed.scrollTop = ludoChatFeed.scrollHeight;
@@ -1196,22 +1231,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Generate dozens of hearts floating inside active window
     const lobby = document.querySelector('.gaming-together-layout');
     if (!lobby) return;
-    
+
     for (let i = 0; i < 15; i++) {
       setTimeout(() => {
         const x = 50 + Math.random() * (lobby.clientWidth - 100);
         const y = lobby.clientHeight - 40;
-        
+
         const floatEmoji = document.createElement('div');
         floatEmoji.className = 'floating-reaction-emoji';
         floatEmoji.textContent = '🎉';
         floatEmoji.style.left = `${x}px`;
         floatEmoji.style.top = `${y}px`;
-        
+
         const rnd = -40 + Math.random() * 80;
         floatEmoji.style.setProperty('--rnd-x', `${rnd}px`);
         floatEmoji.style.setProperty('--rnd-x-end', `${rnd + (-40 + Math.random() * 80)}px`);
-        
+
         lobby.appendChild(floatEmoji);
         setTimeout(() => floatEmoji.remove(), 1200);
       }, i * 60);
@@ -1310,13 +1345,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('invibe_jwt_token');
     if (!token) return;
 
+    // Check if the user is actively searching in the inbox sidebar
+    const inboxSearchInput = document.getElementById('inbox-search-input');
+    if (inboxSearchInput && inboxSearchInput.value.trim() !== '') {
+      return; // Do not overwrite search results with polling updates
+    }
+
     try {
       const res = await fetch(`${API_URL}/api/chats/threads`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to load chat threads');
       chatThreads = await res.json();
-      
+
       renderChatThreadsList();
     } catch (err) {
       console.error('Error loading chat threads:', err);
@@ -1326,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderChatThreadsList() {
     if (!chatThreadsList) return;
     chatThreadsList.innerHTML = '';
-    
+
     // Calculate total unread globally
     const totalUnread = chatThreads.reduce((sum, thread) => sum + (thread.unreadCount || 0), 0);
     updateGlobalUnreadBadges(totalUnread);
@@ -1351,7 +1392,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const secretKey = getChatSecretKey(currentUser.id || currentUser._id, u._id);
           const decrypted = decryptMessage(lastMsg.content, secretKey);
           lastTextPreview = decrypted.length > 30 ? decrypted.substring(0, 27) + '...' : decrypted;
-          
+
           const msgDate = new Date(lastMsg.createdAt);
           lastTimeText = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
@@ -1400,12 +1441,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chatHeaderAvatar) chatHeaderAvatar.src = u.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
 
         const headerIsOnline = (new Date() - new Date(u.lastActive)) < 120000;
-        const statusHtml = headerIsOnline 
+        const statusHtml = headerIsOnline
           ? `<span class="online-indicator blue-diamond-status" style="position:static; display:inline-block; margin-right:4px; width:8px; height:8px;"></span> Online`
           : `<span class="online-indicator black-diamond-status" style="position:static; display:inline-block; margin-right:4px; width:8px; height:8px;"></span> Offline`;
         const headerStatus = document.querySelector('.chat-header-status');
         if (headerStatus) headerStatus.innerHTML = statusHtml;
-        
+
         // Optimistically clear the unread count in UI
         if (thread.unreadCount > 0) {
           thread.unreadCount = 0;
@@ -1443,7 +1484,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (!res.ok) throw new Error('Failed to fetch messages');
       const messages = await res.json();
-      
+
       const prevCount = (chatFeeds[targetUserId] || []).length;
       chatFeeds[targetUserId] = messages;
 
@@ -1455,25 +1496,87 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function getChatDateSeparatorText(dateInput) {
+    const messageDate = new Date(dateInput);
+
+    // Set time of messageDate to midnight for day-based comparison
+    const d = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate());
+
+    // Set time of today to midnight
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Set time of yesterday to midnight
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    const diffTime = today.getTime() - d.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return 'Today';
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays > 1 && diffDays < 7) {
+      // Show weekday name e.g. "Monday"
+      const options = { weekday: 'long' };
+      return messageDate.toLocaleDateString([], options);
+    } else {
+      // Show formatted date e.g. "14 Jul 2026"
+      const options = { day: '2-digit', month: 'short', year: 'numeric' };
+      return messageDate.toLocaleDateString([], options);
+    }
+  }
+
   function renderChatMessages(targetUserId) {
     if (!messagesScroll) return;
-    messagesScroll.innerHTML = '<div class="chat-date-separator">Today</div>';
-    
+    messagesScroll.innerHTML = '';
+
     const messages = chatFeeds[targetUserId] || [];
     const currentUser = getCurrentUser();
     if (!currentUser) return;
     const currentUserId = currentUser.id || currentUser._id;
     const secretKey = getChatSecretKey(currentUserId, targetUserId);
 
+    let lastDateKey = null;
+
     messages.forEach(msg => {
+      const msgDate = new Date(msg.createdAt);
+      const dateKey = `${msgDate.getFullYear()}-${msgDate.getMonth() + 1}-${msgDate.getDate()}`;
+
+      if (dateKey !== lastDateKey) {
+        lastDateKey = dateKey;
+        const separator = document.createElement('div');
+        separator.className = 'chat-date-separator';
+        separator.textContent = getChatDateSeparatorText(msg.createdAt);
+        messagesScroll.appendChild(separator);
+      }
+
       const bubble = document.createElement('div');
-      const decryptedText = decryptMessage(msg.content, secretKey);
+      let decryptedText = decryptMessage(msg.content, secretKey);
+
+      // Attempt to parse embedded reply info from text
+      try {
+        const parsed = JSON.parse(decryptedText);
+        if (parsed && typeof parsed === 'object' && parsed.text !== undefined) {
+          decryptedText = parsed.text;
+          msg.replyTo = parsed.replyTo;
+        }
+      } catch (e) {
+        // Normal text message, ignore parsing error
+      }
+
       const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
+
       const isSent = msg.sender.toString() === currentUserId.toString();
       bubble.className = isSent ? 'chat-bubble sent' : 'chat-bubble received';
 
-      let displayContent = `<div class="bubble-content">${decryptedText}</div>`;
+      // Linkify standard text content
+      const urlRegex = /(\b(https?):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+      const linkifiedText = decryptedText.replace(urlRegex, (url) => {
+        return `<a href="${url}" target="_blank" style="color: #6c3bff; text-decoration: underline; word-break: break-all;">${url}</a>`;
+      });
+      let displayContent = `<div class="bubble-content">${linkifiedText}</div>`;
 
       if (msg.mediaType) {
         if (msg.mediaType === 'image') {
@@ -1527,27 +1630,74 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
           `;
+        } else if (msg.mediaType === 'location') {
+          displayContent = `
+            <div class="bubble-content chat-shared-location-card" onclick="window.open('${decryptedText}', '_blank')" style="cursor: pointer; padding: 0;">
+              <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-md); background:rgba(239,68,68,0.1); transition: background 0.2s;">
+                <i data-lucide="map-pin" style="width:20px; height:20px; color:#ef4444; min-width:20px;"></i>
+                <div style="text-align:left;">
+                  <span style="font-size:12px; font-weight:600; display:block; color:#fff;">Shared Location</span>
+                  <span style="font-size:10px; color:var(--text-muted);">Click to open in Google Maps 📍</span>
+                </div>
+              </div>
+            </div>
+          `;
         }
       }
 
-      if (isSent) {
-        const diamondHtml = msg.read 
-          ? '<span class="msg-status-diamond-seen" title="Seen">💎</span>'
-          : '<span class="msg-status-diamond-sent" title="Sent">◆</span>';
+      let replyPreviewHtml = '';
+      if (msg.replyTo) {
+        let rSender = msg.replyTo.senderName || 'User';
+        let rText = msg.replyTo.text || 'Message';
+        replyPreviewHtml = `
+          <div class="replied-message-box">
+            <div class="replied-sender">${rSender}</div>
+            <div class="replied-text">${rText}</div>
+          </div>
+        `;
+        displayContent = replyPreviewHtml + displayContent;
+      }
 
-        bubble.innerHTML = `
+      let diamondHtml = '';
+      if (isSent) {
+        diamondHtml = msg.read ? '<span class="msg-status-diamond-seen" title="Seen">💎</span>' : '<span class="msg-status-diamond-sent" title="Sent">◆</span>';
+      }
+
+      const msgIdAttr = msg._id ? `data-msg-id="${msg._id}"` : '';
+      const rawTextAttr = `data-raw-text="${decryptedText.replace(/"/g, '&quot;')}"`;
+      const senderNameAttr = `data-sender-name="${isSent ? 'You' : (document.querySelector('.chat-header-name')?.textContent || 'User')}"`;
+
+      const bubbleHtml = `
+        <div class="${isSent ? 'chat-bubble sent' : 'chat-bubble received'}" ${msgIdAttr} ${rawTextAttr} ${senderNameAttr}>
           ${displayContent}
           <div class="bubble-time">${time} ${diamondHtml}</div>
-        `;
+        </div>
+      `;
+
+      const actionsHtml = `
+        <div style="position: relative;">
+          <button class="message-action-trigger"><i data-lucide="chevron-down"></i></button>
+          <div class="message-action-dropdown">
+            <button class="message-action-item action-reply"><i data-lucide="corner-up-left"></i> Reply</button>
+            <button class="message-action-item action-copy"><i data-lucide="copy"></i> Copy</button>
+            <button class="message-action-item action-forward"><i data-lucide="forward"></i> Forward</button>
+            ${isSent ? `<button class="message-action-item action-delete"><i data-lucide="trash-2"></i> Delete</button>` : ''}
+          </div>
+        </div>
+      `;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = isSent ? 'message-bubble-wrapper sent-wrapper' : 'message-bubble-wrapper received-wrapper';
+
+      if (isSent) {
+        wrapper.innerHTML = actionsHtml + bubbleHtml;
       } else {
-        bubble.innerHTML = `
-          ${displayContent}
-          <div class="bubble-time">${time}</div>
-        `;
+        wrapper.innerHTML = bubbleHtml + actionsHtml;
       }
-      messagesScroll.appendChild(bubble);
+
+      messagesScroll.appendChild(wrapper);
     });
-    
+
     messagesScroll.scrollTop = messagesScroll.scrollHeight;
     debouncedCreateIcons();
   }
@@ -1580,6 +1730,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageInput = document.getElementById('chat-message-input');
   const sendMsgBtn = document.getElementById('chat-send-msg-btn');
 
+  let currentReplyToMessage = null;
+
   async function sendMessage() {
     const text = messageInput.value.trim();
     const targetUserId = state.currentChatThread;
@@ -1590,11 +1742,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser || !token) return;
 
     const secretKey = getChatSecretKey(currentUser.id || currentUser._id, targetUserId);
-    const encryptedText = encryptMessage(text, secretKey);
+
+    // Embed reply data into content payload to bypass backend schema limits
+    let finalPayloadText = text;
+    if (currentReplyToMessage) {
+      finalPayloadText = JSON.stringify({
+        text: text,
+        replyTo: currentReplyToMessage
+      });
+    }
+
+    const encryptedText = encryptMessage(finalPayloadText, secretKey);
 
     // Close emoji picker popover if open
     const emojiPopover = document.getElementById('chat-emoji-popover');
     if (emojiPopover) emojiPopover.classList.remove('active');
+
+    // Clear reply state
+    currentReplyToMessage = null;
+    const replyContainer = document.getElementById('chat-reply-preview-container');
+    if (replyContainer) replyContainer.style.display = 'none';
 
     messageInput.value = '';
 
@@ -1610,9 +1777,9 @@ document.addEventListener('DOMContentLoaded', () => {
           content: encryptedText
         })
       });
-      
+
       if (!res.ok) throw new Error('Failed to send message');
-      
+
       await fetchMessages(targetUserId, true);
       loadChatThreads();
     } catch (err) {
@@ -1632,16 +1799,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  // AI replies chips
-  const replyChips = document.querySelectorAll('.reply-chip');
-  replyChips.forEach(chip => {
-    chip.addEventListener('click', () => {
-      messageInput.value = chip.textContent;
-      sendMessage();
-    });
-  });
-
   // --- EMOJI PICKER & CAMERA INTERACTIVITY ---
   const smileBtn = document.getElementById('chat-smile-btn');
   const emojiPopover = document.getElementById('chat-emoji-popover');
@@ -1752,15 +1909,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Open real camera capture view
   function openCameraCapture() {
     if (!cameraCaptureModal) return;
-    
+
     // Show modal
     cameraCaptureModal.classList.add('active');
-    
+
     // Reset views
     if (cameraVideo) cameraVideo.style.display = 'none';
     if (cameraFallbackView) cameraFallbackView.style.display = 'flex';
     if (cameraCaptureAction) cameraCaptureAction.classList.add('disabled');
-    
+
     // Request webcam access
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', frameRate: { ideal: 60, min: 30 } } })
@@ -1792,9 +1949,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Close camera capture view and stop streams
   function closeCameraCapture() {
     if (!cameraCaptureModal) return;
-    
+
     cameraCaptureModal.classList.remove('active');
-    
+
     if (cameraStream) {
       cameraStream.getTracks().forEach(track => track.stop());
       cameraStream = null;
@@ -1812,7 +1969,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (previewImg) previewImg.style.display = 'none';
     if (cameraVideo) {
       cameraVideo.style.display = 'block';
-      try { cameraVideo.play(); } catch(e){}
+      try { cameraVideo.play(); } catch (e) { }
     }
     if (cameraCaptureAction) cameraCaptureAction.style.display = 'flex';
     const previewControls = document.getElementById('camera-preview-controls');
@@ -1852,20 +2009,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (cameraCaptureAction) {
     cameraCaptureAction.addEventListener('click', async () => {
       if (!cameraStream || !cameraVideo || !cameraCanvas) return;
-      
+
       const width = cameraVideo.videoWidth || 640;
       const height = cameraVideo.videoHeight || 480;
-      
+
       cameraCanvas.width = width;
       cameraCanvas.height = height;
-      
+
       const ctx = cameraCanvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(cameraVideo, 0, 0, width, height);
-        
+
         try {
           tempCapturedImage = cameraCanvas.toDataURL('image/png');
-          
+
           // Freeze video and show preview img
           cameraVideo.style.display = 'none';
           const previewImg = document.getElementById('camera-preview-img');
@@ -1873,12 +2030,12 @@ document.addEventListener('DOMContentLoaded', () => {
             previewImg.src = tempCapturedImage;
             previewImg.style.display = 'block';
           }
-          
+
           // Toggle buttons
           cameraCaptureAction.style.display = 'none';
           const previewControls = document.getElementById('camera-preview-controls');
           if (previewControls) previewControls.style.display = 'flex';
-          
+
         } catch (err) {
           console.error('Error capturing image from canvas:', err);
           showToast('Failed to capture photo from webcam feed.');
@@ -1901,10 +2058,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = async function(evt) {
+      reader.onload = async function (evt) {
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const imgUrl = evt.target.result;
-        
+
         const targetUserId = state.currentChatThread;
         const currentUser = getCurrentUser();
         const token = localStorage.getItem('invibe_jwt_token');
@@ -1933,7 +2090,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Failed to send file.');
           }
         }
-        
+
         closeCameraCapture();
       };
       reader.readAsDataURL(file);
@@ -1983,7 +2140,7 @@ document.addEventListener('DOMContentLoaded', () => {
       catPills.forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
       const category = pill.getAttribute('data-cat');
-      
+
       const items = document.querySelectorAll('.thread-item');
       items.forEach(item => {
         item.style.display = 'flex';
@@ -2000,7 +2157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function switchChatMode(modeName) {
     state.chatMode = modeName;
-    
+
     modeTabs.forEach(tab => {
       const mode = tab.getAttribute('data-chat-mode');
       if (mode === modeName) {
@@ -2009,7 +2166,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.classList.remove('active');
       }
     });
-    
+
     chatSubPanels.forEach(panel => {
       const targetId = (modeName === 'voice-call') ? 'chat-sub-view-call' : `chat-sub-view-${modeName}`;
       if (panel.id === targetId) {
@@ -2126,7 +2283,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = async function(evt) {
+      reader.onload = async function (evt) {
         const fileDataUrl = evt.target.result;
         const targetUserId = state.currentChatThread;
         const currentUser = getCurrentUser();
@@ -2314,7 +2471,7 @@ document.addEventListener('DOMContentLoaded', () => {
       mediaViewerReplyInput.value = '';
       mediaViewerModal.classList.remove('active');
       showToast('Sent reply! 💬');
-      
+
       await fetchMessages(targetUserId, true);
       loadChatThreads();
     } catch (err) {
@@ -2342,13 +2499,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const activeTab = document.querySelector('#media-hub-tabs .m-pill.active');
     const filterType = activeTab ? activeTab.getAttribute('data-media-filter') : 'all';
-    
+
     const searchInput = document.getElementById('media-search-input');
     const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
     await fetchMessages(targetUserId, false);
     const messages = chatFeeds[targetUserId] || [];
-    
+
     let mediaMessages = messages.filter(m => m.mediaType);
 
     if (filterType !== 'all') {
@@ -2363,7 +2520,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     mediaGrid.innerHTML = '';
-    
+
     if (mediaMessages.length === 0) {
       mediaGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted); font-size: 12px;">No shared media items found in this chat.</div>';
       return;
@@ -2482,10 +2639,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const simpleDrawerAlerts = [
-    { id: 'camera-click-sim', label: 'Camera stream active. Photo taken! 📸' },
-    { id: 'mic-click-sim', label: 'Audio recording started... 🎙️' },
-    { id: 'loc-click-sim', label: 'Location shared: 37.7749° N, 122.4194° W 📍' },
-    { id: 'ai-click-sim', label: 'Hi-HUBBLE AI Assistant: Processing chats... ✨' },
     { id: 'poll-click-sim', label: 'Poll Widget created: "What time is offsite?" 📊' }
   ];
 
@@ -2500,6 +2653,278 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // --- ATTACHMENTS DRAWER ACTION BUTTONS ---
+  const attachmentBtnPicker = document.getElementById('attachment-btn-picker');
+  const filesBtnPicker = document.getElementById('files-btn-picker');
+  const attachmentFileInput = document.getElementById('attachment-file-input');
+  const attachmentDocInput = document.getElementById('attachment-doc-input');
+
+  if (attachmentBtnPicker && attachmentFileInput) {
+    attachmentBtnPicker.addEventListener('click', () => {
+      attachmentFileInput.click();
+    });
+  }
+
+  if (filesBtnPicker && attachmentDocInput) {
+    filesBtnPicker.addEventListener('click', () => {
+      attachmentDocInput.click();
+    });
+  }
+
+  async function handleAttachmentFileUpload(file) {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function (evt) {
+      const fileDataUrl = evt.target.result;
+      const targetUserId = state.currentChatThread;
+      const currentUser = getCurrentUser();
+      const token = localStorage.getItem('invibe_jwt_token');
+
+      if (targetUserId && currentUser && token) {
+        try {
+          let mediaType = 'file';
+          if (file.type.startsWith('image/')) {
+            mediaType = 'image';
+          } else if (file.type.startsWith('video/')) {
+            mediaType = 'video';
+          } else if (file.type.startsWith('audio/')) {
+            mediaType = 'voice';
+          }
+
+          const sizeStr = (file.size / 1024 / 1024).toFixed(1) + ' MB';
+          const secretKey = getChatSecretKey(currentUser.id || currentUser._id, targetUserId);
+          const encryptedText = encryptMessage(fileDataUrl, secretKey);
+
+          await fetch(`${API_URL}/api/chats/message`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              recipient: targetUserId,
+              content: encryptedText,
+              mediaUrl: 'drawer_upload',
+              mediaType: mediaType,
+              mediaName: file.name,
+              mediaSize: sizeStr
+            })
+          });
+          await fetchMessages(targetUserId, true);
+          loadChatThreads();
+          showToast(`File "${file.name}" sent! 📎`);
+
+          // Close drawer
+          if (toggleAttachmentsBtn) toggleAttachmentsBtn.classList.remove('active');
+          if (attachmentsDrawer) attachmentsDrawer.classList.remove('active');
+        } catch (err) {
+          console.error('File upload error:', err);
+          showToast('Failed to upload file.');
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  if (attachmentFileInput) {
+    attachmentFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      handleAttachmentFileUpload(file);
+      e.target.value = ''; // Reset
+    });
+  }
+
+  if (attachmentDocInput) {
+    attachmentDocInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      handleAttachmentFileUpload(file);
+      e.target.value = ''; // Reset
+    });
+  }
+
+  // Geolocation sharing
+  const locClickSimBtn = document.getElementById('loc-click-sim');
+  if (locClickSimBtn) {
+    locClickSimBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        showToast('Geolocation is not supported by your browser.');
+        return;
+      }
+
+      showToast('Fetching your location... 📍');
+
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+
+        const targetUserId = state.currentChatThread;
+        const currentUser = getCurrentUser();
+        const token = localStorage.getItem('invibe_jwt_token');
+
+        if (targetUserId && currentUser && token) {
+          try {
+            const secretKey = getChatSecretKey(currentUser.id || currentUser._id, targetUserId);
+            const encryptedText = encryptMessage(mapsUrl, secretKey);
+
+            await fetch(`${API_URL}/api/chats/message`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                recipient: targetUserId,
+                content: encryptedText,
+                mediaType: 'location',
+                mediaName: 'Shared Location'
+              })
+            });
+
+            await fetchMessages(targetUserId, true);
+            loadChatThreads();
+            showToast('Location shared! 🗺️');
+
+            // Close drawer
+            if (toggleAttachmentsBtn) toggleAttachmentsBtn.classList.remove('active');
+            if (attachmentsDrawer) attachmentsDrawer.classList.remove('active');
+          } catch (err) {
+            console.error('Location send error:', err);
+            showToast('Failed to share location.');
+          }
+        }
+      }, (error) => {
+        console.error('Geolocation error:', error);
+        showToast('Failed to get location: ' + error.message);
+      }, {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 0
+      });
+    });
+  }
+
+  // Voice Note Audio Recording
+  const micClickSimBtn = document.getElementById('mic-click-sim');
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let isRecordingAudio = false;
+  let recordingTimeout = null;
+
+  if (micClickSimBtn) {
+    micClickSimBtn.addEventListener('click', async () => {
+      if (isRecordingAudio) {
+        // Stop recording
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+      } else {
+        // Start recording
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          showToast('Audio recording is not supported by your browser.');
+          return;
+        }
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioChunks = [];
+          mediaRecorder = new MediaRecorder(stream);
+
+          mediaRecorder.addEventListener('dataavailable', (event) => {
+            if (event.data.size > 0) {
+              audioChunks.push(event.data);
+            }
+          });
+
+          mediaRecorder.addEventListener('stop', async () => {
+            // Stop all stream tracks to release microphone
+            stream.getTracks().forEach(track => track.stop());
+
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            if (audioBlob.size < 1000) {
+              showToast('Recording was too short.');
+              resetRecordingUI();
+              return;
+            }
+
+            // Convert to base64 Data URL
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+              const base64Audio = reader.result;
+              const targetUserId = state.currentChatThread;
+              const currentUser = getCurrentUser();
+              const token = localStorage.getItem('invibe_jwt_token');
+
+              if (targetUserId && currentUser && token) {
+                try {
+                  const sizeStr = (audioBlob.size / 1024).toFixed(1) + ' KB';
+                  const secretKey = getChatSecretKey(currentUser.id || currentUser._id, targetUserId);
+                  const encryptedText = encryptMessage(base64Audio, secretKey);
+
+                  await fetch(`${API_URL}/api/chats/message`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                      recipient: targetUserId,
+                      content: encryptedText,
+                      mediaUrl: 'voice_recording',
+                      mediaType: 'voice',
+                      mediaName: `Voice Note - ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+                      mediaSize: sizeStr
+                    })
+                  });
+                  await fetchMessages(targetUserId, true);
+                  loadChatThreads();
+                  showToast('Voice note sent! 🎙️');
+                } catch (err) {
+                  console.error('Audio upload error:', err);
+                  showToast('Failed to send voice note.');
+                }
+              }
+              resetRecordingUI();
+            };
+            reader.readAsDataURL(audioBlob);
+          });
+
+          mediaRecorder.start();
+          isRecordingAudio = true;
+
+          // Update UI
+          micClickSimBtn.classList.add('bg-pulse-red');
+          const spanText = micClickSimBtn.querySelector('span');
+          if (spanText) spanText.textContent = 'Stop';
+          showToast('Recording voice note... Click again to stop. 🔴');
+
+          // Maximum recording duration: 60 seconds
+          recordingTimeout = setTimeout(() => {
+            if (isRecordingAudio && mediaRecorder && mediaRecorder.state !== 'inactive') {
+              mediaRecorder.stop();
+            }
+          }, 60000);
+
+        } catch (err) {
+          console.error('Microphone access denied or error:', err);
+          showToast('Could not access microphone: ' + err.message);
+          resetRecordingUI();
+        }
+      }
+    });
+  }
+
+  function resetRecordingUI() {
+    isRecordingAudio = false;
+    if (recordingTimeout) clearTimeout(recordingTimeout);
+    if (micClickSimBtn) {
+      micClickSimBtn.classList.remove('bg-pulse-red');
+      const spanText = micClickSimBtn.querySelector('span');
+      if (spanText) spanText.textContent = 'Voice Note';
+    }
+  }
+
 
   // --- WATCH TOGETHER REACTIONS ---
   const watchReactBtns = document.querySelectorAll('.react-burst-btn');
@@ -2507,21 +2932,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function triggerWatchReaction(emoji) {
     if (!watchContainer) return;
-    
+
     const spawnX = watchContainer.clientWidth - 120 + (Math.random() * 80);
     const spawnY = watchContainer.clientHeight - 40;
-    
+
     const floatEmoji = document.createElement('div');
     floatEmoji.className = 'floating-reaction-emoji';
     floatEmoji.textContent = emoji;
     floatEmoji.style.left = `${spawnX}px`;
     floatEmoji.style.top = `${spawnY}px`;
-    
+
     const rnd = -50 + Math.random() * 100;
     const rndXEnd = rnd + (-60 + Math.random() * 120);
     floatEmoji.style.setProperty('--rnd-x', `${rnd}px`);
     floatEmoji.style.setProperty('--rnd-x-end', `${rndXEnd}px`);
-    
+
     watchContainer.appendChild(floatEmoji);
     setTimeout(() => floatEmoji.remove(), 1200);
   }
@@ -2530,7 +2955,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       const emoji = btn.getAttribute('data-emoji');
       triggerWatchReaction(emoji);
-      
+
       // Live Chat update log
       if (watchMessagesScroll) {
         const line = document.createElement('div');
@@ -2603,16 +3028,16 @@ document.addEventListener('DOMContentLoaded', () => {
       initAudioContext();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      
+
       osc.type = type;
       osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      
+
       gain.gain.setValueAtTime(gainValue, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-      
+
       osc.connect(gain);
       gain.connect(audioCtx.destination);
-      
+
       osc.start();
       osc.stop(audioCtx.currentTime + duration);
     } catch (e) {
@@ -2667,7 +3092,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- VIDEO CALL TIMER CONTROLLER ---
   const callTimerDisplay = document.getElementById('call-timer-display');
-  
+
   function startVideoCallTimer() {
     stopVideoCallTimer();
     state.callSeconds = 0;
@@ -2741,8 +3166,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       // 1. Get media permission
-      const mediaConstraints = isAudioOnly 
-        ? { video: false, audio: true } 
+      const mediaConstraints = isAudioOnly
+        ? { video: false, audio: true }
         : { video: true, audio: true };
 
       localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints).catch(err => {
@@ -2863,7 +3288,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function startCallStatePolling() {
     if (callStatePollingInterval) clearInterval(callStatePollingInterval);
-    
+
     let processedCandidates = new Set();
     callStatePollingInterval = setInterval(async () => {
       if (!currentCallId) return;
@@ -2879,14 +3304,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // If caller and call was accepted:
         if (isCaller && data.status === 'connected' && isCallActive && document.getElementById('video-call-active-screen').style.display === 'none') {
           stopAudioFeedback();
-          
+
           // Switch to active view
           document.getElementById('video-call-outgoing-screen').style.display = 'none';
           document.getElementById('video-call-active-screen').style.display = 'block';
           document.getElementById('video-call-controls').style.display = 'block';
-          
+
           startVideoCallTimer();
-          
+
           const camBtn = document.getElementById('call-cam-btn');
           const shareBtn = document.getElementById('call-share-btn');
           if (camBtn) camBtn.style.display = isAudioCall ? 'none' : 'flex';
@@ -2915,7 +3340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (remoteContainer) remoteContainer.style.display = 'block';
             if (localFrame) localFrame.style.display = 'block';
             if (audioContainer) audioContainer.style.display = 'none';
-            
+
             // Update remote name
             const user = getUserById(currentRecipientId);
             if (user) {
@@ -2948,7 +3373,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 processedCandidates.add(candId);
                 try {
                   peerConnection.addIceCandidate(new RTCIceCandidate(cand));
-                } catch(e) { console.error("Error adding candidate:", e); }
+                } catch (e) { console.error("Error adding candidate:", e); }
               }
             });
           }
@@ -2971,7 +3396,7 @@ document.addEventListener('DOMContentLoaded', () => {
     isCallActive = false;
     stopVideoCallTimer();
     stopAudioFeedback();
-    
+
     if (callStatePollingInterval) {
       clearInterval(callStatePollingInterval);
       callStatePollingInterval = null;
@@ -2981,7 +3406,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStream.getTracks().forEach(track => track.stop());
       localStream = null;
     }
-    
+
     if (localScreenStream) {
       localScreenStream.getTracks().forEach(track => track.stop());
       localScreenStream = null;
@@ -3154,7 +3579,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const chatHeaderAvatar = document.getElementById('chat-header-avatar');
         if (chatHeaderName) chatHeaderName.textContent = callerName;
         if (chatHeaderAvatar) chatHeaderAvatar.src = callerAvatar;
-        
+
         const emptyState = document.getElementById('chat-empty-state');
         const chatHeader = document.getElementById('chat-window-header');
         const chatViewport = document.querySelector('.chat-dynamic-viewport');
@@ -3222,8 +3647,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fakeCallSimulation = true;
       }
 
-      const mediaConstraints = isAudioOnlyCall 
-        ? { video: false, audio: true } 
+      const mediaConstraints = isAudioOnlyCall
+        ? { video: false, audio: true }
         : { video: true, audio: true };
 
       // Safe MediaDevices check
@@ -3357,7 +3782,7 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: getAuthHeaders(),
           body: JSON.stringify({ callId: currentCallId })
         });
-      } catch (e) {}
+      } catch (e) { }
     }
     endVideoCallLocally();
   }
@@ -3443,7 +3868,7 @@ document.addEventListener('DOMContentLoaded', () => {
           showToast('Screen sharing initialized! 🖥️');
 
           const screenTrack = localScreenStream.getVideoTracks()[0];
-          
+
           if (peerConnection) {
             const senders = peerConnection.getSenders();
             const videoSender = senders.find(sender => sender.track && sender.track.kind === 'video');
@@ -3494,14 +3919,14 @@ document.addEventListener('DOMContentLoaded', () => {
     pill.addEventListener('click', () => {
       tagPills.forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
-      
+
       const filter = pill.getAttribute('data-filter-tag');
       let matchCount = 0;
-      
+
       feedCards.forEach(card => {
         if (card.id === 'feed-empty-state') return;
         const tags = card.getAttribute('data-tags') || '';
-        
+
         if (filter === 'all' || tags.includes(filter)) {
           card.style.display = 'flex';
           matchCount++;
@@ -3509,13 +3934,13 @@ document.addEventListener('DOMContentLoaded', () => {
           card.style.display = 'none';
         }
       });
-      
+
       if (matchCount === 0) {
         if (emptyStateCard) emptyStateCard.style.display = 'block';
       } else {
         if (emptyStateCard) emptyStateCard.style.display = 'none';
       }
-      
+
       showToast(`Filter: #${filter.toUpperCase()}`);
     });
   });
@@ -3524,17 +3949,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- COLLABORATIVE FILE DOWNLOADS & FOLDER FILTER ---
   const mediaTabs = document.getElementById('media-hub-tabs');
   const mediaHubSearch = document.getElementById('media-search-input');
-  
+
   if (mediaTabs) {
     const tabs = mediaTabs.querySelectorAll('.m-pill');
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        
+
         const filter = tab.getAttribute('data-media-filter');
         const mediaCards = document.querySelectorAll('#shared-media-items-grid .media-item-card');
-        
+
         mediaCards.forEach(card => {
           const type = card.getAttribute('data-type');
           if (filter === 'all' || type === filter) {
@@ -3551,7 +3976,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mediaHubSearch.addEventListener('input', () => {
       const term = mediaHubSearch.value.toLowerCase().trim();
       const mediaCards = document.querySelectorAll('#shared-media-items-grid .media-item-card');
-      
+
       mediaCards.forEach(card => {
         const name = card.querySelector('.file-name').textContent.toLowerCase();
         if (name.includes(term)) {
@@ -3565,7 +3990,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // --- SIMPLE BUTTON INTERACTIONS AND ALERTS ---
-  
+
   // Disabled hardcoded follow suggestion listeners. Managed dynamically in loadFollowSuggestions()
 
   // Suggest see all
@@ -3828,7 +4253,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 1. Update text fields on profile page
       if (profileNameH2) {
-        profileNameH2.innerHTML = `${newName} <span class="verified-badge"><i data-lucide="check"></i></span>`;
+        profileNameH2.innerHTML = `${newName}`;
         debouncedCreateIcons();
       }
       if (profilePreviewNameH3) profilePreviewNameH3.textContent = newName;
@@ -3841,7 +4266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (profileLargeAvatar) profileLargeAvatar.src = currentAvatarUrl;
         if (profilePreviewAvatarImg) profilePreviewAvatarImg.src = currentAvatarUrl;
         if (headerAvatarImg) headerAvatarImg.src = currentAvatarUrl;
-        
+
         // Also update story user avatar if needed
         const storyViewerAvatar = document.getElementById('story-viewer-avatar');
         if (storyViewerAvatar) storyViewerAvatar.src = currentAvatarUrl;
@@ -4085,18 +4510,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Save the Reel
         starBtn.classList.add('active');
         if (textSpan) textSpan.textContent = 'Saved';
-        
+
         // Add to profileData.saved
         if (thumbnailSrc && !profileData.saved.includes(thumbnailSrc)) {
           profileData.saved.unshift(thumbnailSrc); // prepend so it appears first
         }
-        
+
         showToast('Reel saved to profile! ⭐');
       } else {
         // Unsave the Reel
         starBtn.classList.remove('active');
         if (textSpan) textSpan.textContent = 'Save';
-        
+
         // Remove from profileData.saved
         if (thumbnailSrc) {
           const index = profileData.saved.indexOf(thumbnailSrc);
@@ -4104,7 +4529,7 @@ document.addEventListener('DOMContentLoaded', () => {
             profileData.saved.splice(index, 1);
           }
         }
-        
+
         showToast('Reel removed from saved! 🗑️');
       }
 
@@ -4167,10 +4592,10 @@ document.addEventListener('DOMContentLoaded', () => {
     dot.addEventListener('click', () => {
       colorPickerDots.forEach(d => d.classList.remove('active'));
       dot.classList.add('active');
-      
+
       const selectedColor = dot.getAttribute('data-color');
       document.documentElement.style.setProperty('--primary', selectedColor);
-      
+
       showToast(`Accent color updated! 🎨`);
     });
   });
@@ -4236,11 +4661,86 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!list) return;
 
     list.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--text-muted);">Loading Hubbies...</div>';
-    
+
+    // Add external sharing section if not present
+    const shareCard = modal.querySelector('.share-card');
+    if (shareCard && !shareCard.querySelector('.external-share-section')) {
+      const extSection = document.createElement('div');
+      extSection.className = 'external-share-section';
+      extSection.style.cssText = 'margin-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 16px 20px 20px 20px;';
+
+      const title = document.createElement('h4');
+      title.innerText = 'Share to other apps';
+      title.style.cssText = 'font-size: 11px; color: var(--text-muted); margin-bottom: 12px; font-family: var(--font-title); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;';
+      extSection.appendChild(title);
+
+      const buttonsContainer = document.createElement('div');
+      buttonsContainer.className = 'external-share-buttons';
+      buttonsContainer.style.cssText = 'display: flex; gap: 16px; justify-content: space-around; align-items: center;';
+
+      const shareOptions = [
+        { name: 'WhatsApp', icon: 'message-circle', color: '#25D366', url: (url) => `https://api.whatsapp.com/send?text=${encodeURIComponent('Check this out on HI-HUBBLE: ' + url)}` },
+        { name: 'X', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:block;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`, color: '#ffffff', url: (url) => `https://x.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent('Check this out on HI-HUBBLE!')}` },
+        { name: 'Telegram', icon: 'send', color: '#0088cc', url: (url) => `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent('Check this out on HI-HUBBLE!')}` },
+        { name: 'Gmail', icon: 'mail', color: '#EA4335', url: (url) => `mailto:?subject=${encodeURIComponent('Check this out on HI-HUBBLE')}&body=${encodeURIComponent(url)}` },
+        {
+          name: 'Copy Link', icon: 'copy', color: '#8b5cf6', action: async (url) => {
+            try {
+              await navigator.clipboard.writeText(url);
+              showToast('Link copied to clipboard! 📋');
+            } catch (err) {
+              showToast('Failed to copy link.');
+            }
+          }
+        }
+      ];
+
+      shareOptions.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'external-share-btn';
+        btn.style.cssText = 'display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: var(--text-color); font-size: 11px; transition: transform 0.2s;';
+
+        btn.addEventListener('mouseenter', () => btn.style.transform = 'scale(1.1)');
+        btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
+
+        const iconContainer = document.createElement('div');
+        iconContainer.style.cssText = `width: 42px; height: 42px; border-radius: 50%; background: ${opt.color}15; border: 1px solid ${opt.color}40; color: ${opt.color}; display: flex; justify-content: center; align-items: center; font-size: 18px; box-shadow: 0 4px 12px ${opt.color}10;`;
+
+        if (opt.svg) {
+          iconContainer.innerHTML = opt.svg;
+        } else {
+          iconContainer.innerHTML = `<i data-lucide="${opt.icon}"></i>`;
+        }
+
+        const label = document.createElement('span');
+        label.innerText = opt.name;
+        label.style.cssText = 'color: var(--text-muted); font-weight: 500; margin-top: 2px;';
+
+        btn.appendChild(iconContainer);
+        btn.appendChild(label);
+
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const currentUrl = window.location.href;
+          if (opt.url) {
+            window.open(opt.url(currentUrl), '_blank');
+          } else if (opt.action) {
+            opt.action(currentUrl);
+          }
+        });
+
+        buttonsContainer.appendChild(btn);
+      });
+
+      extSection.appendChild(buttonsContainer);
+      shareCard.appendChild(extSection);
+      debouncedCreateIcons();
+    }
+
     const token = localStorage.getItem('invibe_jwt_token');
     const currentUser = getCurrentUser();
     if (!token || !currentUser) {
-      list.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--text-muted);">Please log in to share.</div>';
+      list.innerHTML = '<div style="padding:10px; font-size:12px; color:var(--text-muted); text-align:center;">Please log in to share with Hubbies.</div>';
       return;
     }
 
@@ -4268,14 +4768,14 @@ document.addEventListener('DOMContentLoaded', () => {
           <img src="${u.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'}" class="share-friend-avatar" alt="${u.fullName}" />
           <span class="share-friend-name">${u.fullName}</span>
         `;
-        
+
         card.addEventListener('click', async () => {
           const currentUser = getCurrentUser();
           if (!currentUser) return;
 
           const secretKey = getChatSecretKey(currentUser.id || currentUser._id, u._id);
           const isReel = key.startsWith('reel');
-          
+
           let sharedContentHtml = '';
           if (isReel) {
             sharedContentHtml = `<div class="shared-hub-card reel" data-shared-id="${key}"><i data-lucide="video" style="display:inline-block; vertical-align:middle; margin-right:4px;"></i> Shared a Reel</div>`;
@@ -4305,7 +4805,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             showToast(`Shared successfully to ${u.fullName}! ✈️`);
             if (modal) modal.classList.remove('active');
-            
+
             loadChatThreads();
             if (state.currentChatThread && state.currentChatThread.toString() === u._id.toString()) {
               await fetchMessages(u._id, true);
@@ -4315,7 +4815,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Failed to share item.');
           }
         });
-        
+
         list.appendChild(card);
       });
     } catch (err) {
@@ -4326,11 +4826,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Handle comment click events (focuses the inline comment input field on dynamic posts or opens modal)
   let currentCommentPostId = null;
-  
+
   if (commentsModal) {
     const sendBtn = commentsModal.querySelector('.comment-send-btn');
     const inputField = commentsModal.querySelector('input');
-    
+
     if (sendBtn && inputField) {
       sendBtn.addEventListener('click', async () => {
         const text = inputField.value.trim();
@@ -4359,7 +4859,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const pid = commentBtn.getAttribute('data-post-id') || commentBtn.closest('[data-post-id]')?.getAttribute('data-post-id') || '1';
       const card = commentBtn.closest('.feed-card');
       const inlineInput = card ? card.querySelector('.comment-input-field') : null;
-      
+
       if (inlineInput) {
         inlineInput.focus();
         inlineInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -4374,35 +4874,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Share trigger click
   document.addEventListener('click', async (e) => {
-    const shareBtn = e.target.closest('.share-btn-action, .reel-share-sim, .share-btn, .feed-share-btn');
+    const shareBtn = e.target.closest('.share-btn-action, .share-btn, .feed-share-btn');
     if (shareBtn) {
       e.preventDefault();
       e.stopPropagation();
-      
-      const urlToShare = window.location.href;
-      
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: 'Check this out on HI-HUBBLE',
-            url: urlToShare
-          });
-        } catch (err) {
-          console.log('Error sharing:', err);
-        }
-      } else {
-        try {
-          await navigator.clipboard.writeText(urlToShare);
-          showToast('Link copied');
-        } catch (err) {
-          console.error('Failed to copy', err);
-        }
-      }
+
+      const card = shareBtn.closest('.feed-card');
+      const postId = shareBtn.getAttribute('data-post-id') || card?.getAttribute('data-post-id') || card?.id?.replace('post-', '') || '1';
+
+      // Look for a local feed-share-modal first, otherwise use the global shareModal
+      const localModal = card?.querySelector('.feed-share-modal') || document.getElementById('share-modal');
+
+      openShare('post_' + postId, localModal);
     }
   });
 
   // ─── LIVE MONGO DATABASE SYSTEMS INTEGRATION ───
-  
+
   async function loadFeedPosts() {
     const feedContainer = document.getElementById('home-feed-posts');
     if (!feedContainer) return;
@@ -4428,7 +4916,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       posts.forEach(post => {
         const isLikedByMe = currentUser ? post.likes.includes(currentUser.id) : false;
-        
+
         const card = document.createElement('article');
         card.className = 'feed-card';
         card.id = `post-${post._id}`;
@@ -4452,9 +4940,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="post-author-info">
               <img src="${post.author.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80'}" alt="${post.author.fullName}" class="author-avatar" />
               <div>
-                <h4 class="author-name">${post.author.fullName} <span class="verified-badge"><i data-lucide="check"></i></span></h4>
+                <h4 class="author-name">${post.author.fullName}</h4>
                 <div class="post-meta">
-                  <span class="post-time">${new Date(post.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  <span class="post-time">${new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   <span class="dot-separator">•</span>
                   <i data-lucide="globe" class="meta-icon"></i>
                 </div>
@@ -4465,13 +4953,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
           <div class="post-media-container" style="position:relative; overflow:hidden; border-radius: 12px; margin: 12px 0;">
             ${post.mediaType === 'video'
-              ? `<video src="${post.mediaUrl}" loop muted playsinline style="width:100%; border-radius:12px; display:block;" class="post-media-video"></video>
+            ? `<video src="${post.mediaUrl}" loop muted playsinline style="width:100%; border-radius:12px; display:block;" class="post-media-video"></video>
                  <div class="video-play-overlay">
                    <button class="play-btn-big"><i data-lucide="play"></i></button>
+                 </div>
+                 <div class="video-mute-container" style="position: absolute; left: 16px; bottom: 24px; z-index: 12;">
+                   <button class="action-circle-btn mute-btn-action" data-post-id="${post._id}">
+                     <i data-lucide="volume-2"></i>
+                   </button>
                  </div>`
-              : `<img src="${post.mediaUrl}" alt="Post Media" style="width:100%; border-radius:12px; display:block;" />`
-            }
-            <div class="double-tap-heart"><i data-lucide="heart"></i></div>
+            : `<img src="${post.mediaUrl}" alt="Post Media" style="width:100%; border-radius:12px; display:block;" />`
+          }
 
             <!-- Vertical engagement overlay right aligned -->
             <div class="post-engagement-actions">
@@ -4501,10 +4993,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               
               <div class="post-comment-input-area" style="display: flex; gap: 8px; margin-top: 12px;">
-                <input type="text" placeholder="Add a comment..." class="comment-input-field" id="comment-input-${post._id}" style="flex:1; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 8px 16px; color: var(--text-color); font-size: 13px;" />
-                <button class="send-comment-btn" data-post-id="${post._id}" style="background: var(--primary-color); border:none; color:white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                  <i data-lucide="send" style="width:14px; height:14px;"></i>
-                </button>
+                <input type="text" placeholder="Write a comment and press Enter..." class="comment-input-field" id="comment-input-${post._id}" style="flex:1; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 8px 16px; color: var(--text-color); font-size: 13px;" />
               </div>
             </div>
           </div>
@@ -4533,20 +5022,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const dynamicVideoOverlays = feedContainer.querySelectorAll('.video-play-overlay');
       dynamicVideoOverlays.forEach(overlay => {
-        overlay.addEventListener('click', () => {
-          const container = overlay.closest('.post-media-container');
-          const video = container.querySelector('.post-media-video');
-          const playIcon = overlay.querySelector('i');
-          if (video.paused) {
-            video.play();
-            playIcon.setAttribute('data-lucide', 'pause');
-            overlay.style.background = 'rgba(0,0,0,0)';
-            overlay.style.opacity = '0';
-          } else {
+        const container = overlay.closest('.post-media-container');
+        const video = container.querySelector('.post-media-video');
+        const playIcon = overlay.querySelector('i');
+
+        overlay.addEventListener('click', (e) => {
+          e.stopPropagation();
+          video.play();
+          overlay.style.display = 'none';
+          debouncedCreateIcons();
+        });
+
+        video.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!video.paused) {
             video.pause();
             playIcon.setAttribute('data-lucide', 'play');
+            overlay.style.display = 'flex';
             overlay.style.background = 'rgba(0,0,0,0.25)';
             overlay.style.opacity = '1';
+            debouncedCreateIcons();
+          }
+        });
+      });
+
+      const muteButtons = feedContainer.querySelectorAll('.mute-btn-action');
+      muteButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const container = btn.closest('.post-media-container');
+          const video = container.querySelector('.post-media-video');
+          const muteIcon = btn.querySelector('i');
+
+          if (video.muted) {
+            video.muted = false;
+            muteIcon.setAttribute('data-lucide', 'volume-2');
+          } else {
+            video.muted = true;
+            muteIcon.setAttribute('data-lucide', 'volume-2');
           }
           debouncedCreateIcons();
         });
@@ -4556,29 +5070,18 @@ document.addEventListener('DOMContentLoaded', () => {
       mediaBoxes.forEach(container => {
         let lastTap = 0;
         container.addEventListener('click', async (e) => {
-          if (e.target.closest('.post-engagement-actions')) return; // ignore clicks on engagement overlays
+          if (e.target.closest('.post-engagement-actions') || e.target.closest('.video-mute-container')) return; // ignore clicks on engagement overlays or mute button
           const now = Date.now();
           const timespan = now - lastTap;
           if (timespan < 300 && timespan > 0) {
             e.preventDefault();
             const btn = container.closest('.feed-card').querySelector('.like-btn-action');
             const pid = btn.getAttribute('data-post-id');
-            const doubleHeart = container.querySelector('.double-tap-heart');
-            
             const rect = container.getBoundingClientRect();
             const relativeX = e.clientX - rect.left;
             const relativeY = e.clientY - rect.top;
 
-            if (doubleHeart) {
-              doubleHeart.style.left = `${relativeX}px`;
-              doubleHeart.style.top = `${relativeY}px`;
-              doubleHeart.classList.remove('animate');
-              window.requestAnimationFrame(() => {
-                window.requestAnimationFrame(() => {
-                  doubleHeart.classList.add('animate');
-                });
-              });
-            }
+            triggerHeartExplosion(relativeX, relativeY, container);
 
             if (!btn.classList.contains('liked')) {
               await togglePostLike(pid, btn);
@@ -4588,17 +5091,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       });
 
-      const commentSendButtons = feedContainer.querySelectorAll('.send-comment-btn');
-      commentSendButtons.forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const pid = btn.getAttribute('data-post-id');
-          const input = document.getElementById(`comment-input-${pid}`);
-          const text = input.value.trim();
-          if (text) {
-            await submitComment(pid, text, input);
-          }
-        });
-      });
+      // Posted via Enter key only (send button removed)
 
       const commentInputs = feedContainer.querySelectorAll('.comment-input-field');
       commentInputs.forEach(input => {
@@ -4616,6 +5109,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error('Error loading posts:', err);
+    }
+  }
+
+  function triggerBtnHeartExplosion(anchorElement) {
+    if (!anchorElement) return;
+    const rect = anchorElement.getBoundingClientRect();
+
+    // Spawn 8 purple hearts
+    for (let i = 0; i < 8; i++) {
+      const heart = document.createElement('div');
+      heart.className = 'heart-particle';
+      heart.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="#8b5cf6" stroke="#8b5cf6" stroke-width="2" style="width: 100%; height: 100%;">
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+        </svg>
+      `;
+
+      const size = Math.random() * 10 + 12; // sizes 12px to 22px
+      heart.style.width = `${size}px`;
+      heart.style.height = `${size}px`;
+
+      const startX = rect.left + rect.width / 2 - size / 2;
+      const startY = rect.top + rect.height / 2 - size / 2;
+      heart.style.left = `${startX}px`;
+      heart.style.top = `${startY}px`;
+
+      const angle = (Math.random() * 360) * Math.PI / 180;
+      const distance = Math.random() * 40 + 35;
+      const tx = Math.cos(angle) * distance;
+      const ty = -Math.random() * 70 - 30; // Float upwards
+      const rot = Math.random() * 90 - 45;
+      const scale = Math.random() * 0.4 + 0.8;
+
+      heart.style.setProperty('--tx', `${tx}px`);
+      heart.style.setProperty('--ty', `${ty}px`);
+      heart.style.setProperty('--rot', `${rot}deg`);
+      heart.style.setProperty('--scale', scale);
+
+      heart.style.animationDelay = `${Math.random() * 0.1}s`;
+
+      document.body.appendChild(heart);
+
+      setTimeout(() => {
+        heart.remove();
+      }, 1100);
     }
   }
 
@@ -4645,6 +5183,7 @@ document.addEventListener('DOMContentLoaded', () => {
           heartIcon.style.fill = '#8b5cf6';
           heartIcon.style.stroke = '#8b5cf6';
         }
+        triggerBtnHeartExplosion(btnElement);
         showToast('Liked post! 💜');
       } else {
         btnElement.classList.remove('liked');
@@ -4659,7 +5198,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isLiked = btnElement.classList.contains('liked');
       const countSpan = btnElement.querySelector('.action-count');
       const heartIcon = btnElement.querySelector('i, svg');
-      
+
       let count = parseInt(countSpan ? countSpan.textContent : '0') || 0;
 
       if (!isLiked) {
@@ -4669,6 +5208,7 @@ document.addEventListener('DOMContentLoaded', () => {
           heartIcon.style.stroke = '#8b5cf6';
         }
         if (countSpan) countSpan.textContent = count + 1;
+        triggerBtnHeartExplosion(btnElement);
         showToast('Liked post! 💜');
       } else {
         btnElement.classList.remove('liked');
@@ -4703,7 +5243,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error(comments.error);
 
       inputField.value = '';
-      
+
       const card = document.getElementById(`post-${postId}`) || inputField.closest('.feed-card') || document.querySelector(`[data-post-id="${postId}"]`)?.closest('.feed-card');
       if (card) {
         const countBadge = card.querySelector('.comment-btn-action .action-count');
@@ -4731,7 +5271,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       // Fallback to frontend-only state
       inputField.value = '';
-      
+
       const card = document.getElementById(`post-${postId}`) || inputField.closest('.feed-card') || document.querySelector(`[data-post-id="${postId}"]`)?.closest('.feed-card');
       if (card) {
         const countBadge = card.querySelector('.comment-btn-action .action-count');
@@ -4771,7 +5311,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const reels = await res.json();
 
       scroller.innerHTML = '';
-      
+
       const currentUserStr = localStorage.getItem('invibeUser');
       const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
 
@@ -4783,8 +5323,6 @@ document.addEventListener('DOMContentLoaded', () => {
         card.innerHTML = `
           <video src="${reel.videoUrl}" loop muted playsinline class="reel-video"></video>
           <div class="reel-play-icon-overlay"><i data-lucide="play"></i></div>
-          
-          <div class="double-tap-heart"><i data-lucide="heart"></i></div>
           
           <div class="reel-overlay">
             <div class="reel-left-info">
@@ -4832,7 +5370,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="story-viewer-overlay reel-share-modal">
             <div class="share-card glass-panel">
               <div class="modal-header">
-                <h3>Share to Friends</h3>
+                <h3>Share to Hubbies</h3>
                 <button class="modal-close-btn"><i data-lucide="x"></i></button>
               </div>
               <div class="share-friends-list"></div>
@@ -5084,7 +5622,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 followBtn.textContent = 'Follow';
                 showToast('Unfollowed successfully.');
               }
-              
+
               loadProfileStats();
               loadFollowSuggestions();
             } catch (err) {
@@ -5135,7 +5673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         circle.style.cursor = 'pointer';
         circle.title = `${user.fullName} (@${user.username})`;
         circle.innerHTML = `<img src="${user.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'}" alt="${user.fullName}" />`;
-        
+
         circle.addEventListener('click', () => {
           switchView('profile', user._id);
         });
@@ -5240,17 +5778,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const relativeX = e.clientX - rect.left;
           const relativeY = e.clientY - rect.top;
 
-          const doubleHeart = card.querySelector('.double-tap-heart');
-          if (doubleHeart) {
-            doubleHeart.style.left = `${relativeX}px`;
-            doubleHeart.style.top = `${relativeY}px`;
-            doubleHeart.classList.remove('animate');
-            window.requestAnimationFrame(() => {
-              window.requestAnimationFrame(() => {
-                doubleHeart.classList.add('animate');
-              });
-            });
-          }
+          triggerHeartExplosion(relativeX, relativeY, card);
 
           if (likeBtn && !likeBtn.classList.contains('liked')) {
             await toggleReelLike(reelId, likeBtn);
@@ -5451,10 +5979,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Immediately reset UI to show loading state and prevent showing stale profile of the previous user
     const profileAvatar = document.querySelector('.profile-screen-avatar');
     if (profileAvatar) profileAvatar.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
-    
+
     const profileName = document.querySelector('.profile-summary-top h3');
     if (profileName) profileName.innerHTML = 'Loading Profile...';
-    
+
     const profileHandle = document.querySelector('.profile-screen-handle');
     if (profileHandle) profileHandle.textContent = '@...';
 
@@ -5486,12 +6014,12 @@ document.addEventListener('DOMContentLoaded', () => {
       // Update profile info elements
       const profileAvatar = document.querySelector('.profile-screen-avatar');
       if (profileAvatar) profileAvatar.src = user.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
-      
+
       const profileName = document.querySelector('.profile-summary-top h3');
       if (profileName) {
-        profileName.innerHTML = user.fullName + ' <span class="verified-badge"><i data-lucide="check"></i></span>';
+        profileName.innerHTML = user.fullName;
       }
-      
+
       const profileHandle = document.querySelector('.profile-screen-handle');
       if (profileHandle) profileHandle.textContent = '@' + user.username;
 
@@ -5619,9 +6147,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="post-author-info">
             <img src="${post.author.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80'}" alt="${post.author.fullName}" class="author-avatar" />
             <div>
-              <h4 class="author-name">${post.author.fullName} <span class="verified-badge"><i data-lucide="check"></i></span></h4>
+              <h4 class="author-name">${post.author.fullName}</h4>
               <div class="post-meta">
-                <span class="post-time">${new Date(post.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                <span class="post-time">${new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 <span class="dot-separator">•</span>
                 <i data-lucide="globe" class="meta-icon"></i>
               </div>
@@ -5632,13 +6160,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="post-media-container" style="position:relative; overflow:hidden; border-radius: 12px; margin: 12px 0;">
           ${post.mediaType === 'video'
-            ? `<video src="${post.mediaUrl}" loop muted playsinline style="width:100%; border-radius:12px; display:block;" class="post-media-video"></video>
+        ? `<video src="${post.mediaUrl}" loop muted playsinline style="width:100%; border-radius:12px; display:block;" class="post-media-video"></video>
                <div class="video-play-overlay">
                  <button class="play-btn-big"><i data-lucide="play"></i></button>
+               </div>
+               <div class="video-mute-container" style="position: absolute; left: 16px; bottom: 24px; z-index: 12;">
+                 <button class="action-circle-btn mute-btn-action" data-post-id="${post._id}">
+                   <i data-lucide="volume-2"></i>
+                 </button>
                </div>`
-            : `<img src="${post.mediaUrl}" alt="Post Media" style="width:100%; border-radius:12px; display:block;" />`
-          }
-          <div class="double-tap-heart"><i data-lucide="heart"></i></div>
+        : `<img src="${post.mediaUrl}" alt="Post Media" style="width:100%; border-radius:12px; display:block;" />`
+      }
 
           <div class="post-engagement-actions">
             <div class="engagement-item like-btn-action ${isLikedByMe ? 'liked' : ''}" data-post-id="${post._id}">
@@ -5667,10 +6199,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             <div class="post-comment-input-area" style="display: flex; gap: 8px; margin-top: 12px;">
-              <input type="text" placeholder="Add a comment..." class="comment-input-field" id="comment-input-${post._id}" style="flex:1; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 8px 16px; color: var(--text-color); font-size: 13px;" />
-              <button class="send-comment-btn" data-post-id="${post._id}" style="background: var(--primary-color); border:none; color:white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                <i data-lucide="send" style="width:14px; height:14px;"></i>
-              </button>
+              <input type="text" placeholder="Write a comment and press Enter..." class="comment-input-field" id="comment-input-${post._id}" style="flex:1; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 8px 16px; color: var(--text-color); font-size: 13px;" />
             </div>
           </div>
         </div>
@@ -5715,18 +6244,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Wire up comment send button
-    const commentSendBtn = profilePostViewerContent.querySelector('.send-comment-btn');
-    if (commentSendBtn) {
-      commentSendBtn.addEventListener('click', async () => {
-        const pid = commentSendBtn.getAttribute('data-post-id');
-        const input = document.getElementById(`comment-input-${pid}`);
-        const text = input ? input.value.trim() : '';
-        if (text) {
-          await submitComment(pid, text, input);
-        }
-      });
-    }
+    // Posted via Enter key only (send button removed)
 
     // Wire up comment input enter key
     const commentInput = profilePostViewerContent.querySelector('.comment-input-field');
@@ -5765,34 +6283,44 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Wire up video mute/unmute
+    const muteBtn = profilePostViewerContent.querySelector('.mute-btn-action');
+    if (muteBtn) {
+      muteBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const container = muteBtn.closest('.post-media-container');
+        const video = container.querySelector('.post-media-video');
+        const muteIcon = muteBtn.querySelector('i');
+
+        if (video.muted) {
+          video.muted = false;
+          muteIcon.setAttribute('data-lucide', 'volume-2');
+        } else {
+          video.muted = true;
+          muteIcon.setAttribute('data-lucide', 'volume-2');
+        }
+        debouncedCreateIcons();
+      });
+    }
+
     // Wire up double-tap heart on media
     const mediaContainer = profilePostViewerContent.querySelector('.post-media-container');
     if (mediaContainer) {
       let lastTap = 0;
       mediaContainer.addEventListener('click', async (e) => {
-        if (e.target.closest('.post-engagement-actions')) return;
+        if (e.target.closest('.post-engagement-actions') || e.target.closest('.video-mute-container')) return;
         const now = Date.now();
         const timespan = now - lastTap;
         if (timespan < 300 && timespan > 0) {
           e.preventDefault();
           const btn = mediaContainer.closest('.feed-card').querySelector('.like-btn-action');
           const pid = btn.getAttribute('data-post-id');
-          const doubleHeart = mediaContainer.querySelector('.double-tap-heart');
-          
           const rect = mediaContainer.getBoundingClientRect();
           const relativeX = e.clientX - rect.left;
           const relativeY = e.clientY - rect.top;
 
-          if (doubleHeart) {
-            doubleHeart.style.left = `${relativeX}px`;
-            doubleHeart.style.top = `${relativeY}px`;
-            doubleHeart.classList.remove('animate');
-            window.requestAnimationFrame(() => {
-              window.requestAnimationFrame(() => {
-                doubleHeart.classList.add('animate');
-              });
-            });
-          }
+          triggerHeartExplosion(relativeX, relativeY, mediaContainer);
 
           if (!btn.classList.contains('liked')) {
             await togglePostLike(pid, btn);
@@ -5833,13 +6361,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const vibesGrid = document.getElementById('profile-vibes-grid');
       const reelsGrid = document.getElementById('profile-reels-grid');
+      const savedGrid = document.getElementById('profile-saved-grid');
+
+      if (vibesGrid) vibesGrid.classList.remove('active');
+      if (reelsGrid) reelsGrid.classList.remove('active');
+      if (savedGrid) savedGrid.classList.remove('active');
 
       if (tabName === 'vibes') {
         if (vibesGrid) vibesGrid.classList.add('active');
-        if (reelsGrid) reelsGrid.classList.remove('active');
-      } else {
-        if (vibesGrid) vibesGrid.classList.remove('active');
+      } else if (tabName === 'reels') {
         if (reelsGrid) reelsGrid.classList.add('active');
+      } else if (tabName === 'saved') {
+        if (savedGrid) {
+          savedGrid.classList.add('active');
+          renderSavedHubbs();
+        }
       }
     });
   });
@@ -5847,6 +6383,42 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bind follow/unfollow action on user profile
   const profileFollowBtn = document.getElementById('profile-follow-btn');
   if (profileFollowBtn) {
+
+    function renderSavedHubbs() {
+      const savedGrid = document.getElementById('profile-saved-grid');
+      if (!savedGrid) return;
+      savedGrid.innerHTML = '';
+
+      const savedItems = window.savedHubbs || [];
+      if (savedItems.length === 0) {
+        savedGrid.innerHTML = '<div class="profile-grid-empty" style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px;">No saved hubs yet. 🔖</div>';
+        return;
+      }
+
+      savedItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'profile-grid-item';
+        if (item.type === 'video') {
+          div.innerHTML = `
+          <video src="${item.url}" muted loop style="width:100%; height:100%; object-fit:cover;"></video>
+          <div class="profile-grid-item-overlay">
+            <span><i data-lucide="bookmark"></i> Saved</span>
+          </div>`;
+          const video = div.querySelector('video');
+          div.addEventListener('mouseenter', () => video.play());
+          div.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+        } else {
+          div.innerHTML = `
+          <img src="${item.url}" alt="Saved Hub" style="width:100%; height:100%; object-fit:cover;" />
+          <div class="profile-grid-item-overlay">
+            <span><i data-lucide="bookmark"></i> Saved</span>
+          </div>`;
+        }
+        savedGrid.appendChild(div);
+      });
+      debouncedCreateIcons();
+    }
+
     profileFollowBtn.addEventListener('click', async () => {
       const uid = profileFollowBtn.getAttribute('data-user-id');
       const token = localStorage.getItem('invibe_jwt_token');
@@ -5872,7 +6444,7 @@ document.addEventListener('DOMContentLoaded', () => {
           profileFollowBtn.textContent = 'Follow';
           showToast('Unfollowed successfully.');
         }
-        
+
         loadProfileStats();
         loadFollowSuggestions();
         loadUserProfile(uid);
@@ -5904,7 +6476,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUserStr = localStorage.getItem('invibeUser');
     if (!currentUserStr) return;
     const currentUser = JSON.parse(currentUserStr);
-    
+
     const isMe = (followBtn && followBtn.style.display === 'none');
     const targetUserId = isMe ? (currentUser.id || currentUser._id) : followBtn.getAttribute('data-user-id');
     if (!targetUserId) return;
@@ -5980,7 +6552,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 rFollowBtn.textContent = 'Follow';
                 showToast('Unfollowed successfully.');
               }
-              
+
               loadProfileStats();
               loadUserProfile(targetUserId);
             } catch (err) {
@@ -6061,9 +6633,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Row click triggers profile navigation
             row.addEventListener('click', (e) => {
               if (e.target.closest('.search-follow-btn')) return;
-              
+
               switchView('profile', user._id);
-              
+
               globalSearchInput.value = '';
               searchDropdown.style.display = 'none';
             });
@@ -6247,9 +6819,9 @@ document.addEventListener('DOMContentLoaded', () => {
   loadProfileStats();
   loadStories();
   loadActiveVibers();
-  
+
   // Custom auth reload hook
-  window.updateAppUI = function() {
+  window.updateAppUI = function () {
     const userStr = localStorage.getItem('invibeUser');
     const profileImage = localStorage.getItem('invibeProfileImage');
     if (!userStr) return;
@@ -6271,12 +6843,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (myProfileAvatar && profileImage) myProfileAvatar.src = profileImage;
       const myProfileName = document.querySelector('.profile-summary-top h3');
       if (myProfileName && user.fullName) {
-        myProfileName.innerHTML = user.fullName + ' <span class="verified-badge"><i data-lucide="check"></i></span>';
+        myProfileName.innerHTML = user.fullName;
         debouncedCreateIcons();
       }
       const myProfileUsername = document.querySelector('.profile-screen-handle');
       if (myProfileUsername && user.username) myProfileUsername.textContent = '@' + user.username;
-      
+
       const bannerImage = localStorage.getItem('invibeBannerImage');
       const sidebarBanner = document.querySelector('.sidebar-left .card-cover-bg');
       if (sidebarBanner && bannerImage) {
@@ -6284,7 +6856,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarBanner.style.backgroundSize = 'cover';
         sidebarBanner.style.backgroundPosition = 'center';
       }
-      
+
       loadProfileStats();
       loadFollowSuggestions();
       loadStories();
@@ -6315,7 +6887,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (!res.ok) throw new Error('Failed to fetch notifications');
       const notifications = await res.json();
-      
+
       // Update badges (blue diamond for unread notifications)
       const unreadCount = notifications.filter(n => !n.read).length;
       if (unreadCount > 0) {
@@ -6368,10 +6940,10 @@ document.addEventListener('DOMContentLoaded', () => {
     notifications.forEach(notif => {
       const item = document.createElement('div');
       item.className = `notification-item ${notif.read ? '' : 'unread'}`;
-      
+
       const sender = notif.sender || { fullName: 'Someone', username: 'someone', profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80' };
       const senderAvatar = sender.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
-      
+
       let messageText = '';
       let mediaThumbnail = '';
 
@@ -6440,7 +7012,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (notifBtn && notifPanel) {
     notifBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      
+
       const searchDropdown = document.getElementById('search-results-dropdown');
       if (searchDropdown) searchDropdown.style.display = 'none';
 
@@ -6526,17 +7098,17 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     const token = localStorage.getItem('invibe_jwt_token');
     if (!token) return;
-    
+
     loadNotifications();
     loadChatThreads();
     if (state.activeView === 'chats' && state.currentChatThread) {
       fetchMessages(state.currentChatThread, false);
-      
+
       const activeThreadObj = chatThreads.find(t => t.user && t.user._id.toString() === state.currentChatThread.toString());
       if (activeThreadObj && activeThreadObj.user) {
         const u = activeThreadObj.user;
         const isOnline = (new Date() - new Date(u.lastActive)) < 120000;
-        const statusHtml = isOnline 
+        const statusHtml = isOnline
           ? `<span class="online-indicator blue-diamond-status" style="position:static; display:inline-block; margin-right:4px; width:8px; height:8px;"></span> Online`
           : `<span class="online-indicator black-diamond-status" style="position:static; display:inline-block; margin-right:4px; width:8px; height:8px;"></span> Offline`;
         const headerStatus = document.querySelector('.chat-header-status');
@@ -6544,5 +7116,493 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }, 4000);
+
+  function setupVideoScrollObserver() {
+    const observerOptions = {
+      root: null,
+      threshold: [0, 0.25, 0.5, 0.75, 1.0]
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const video = entry.target;
+        if (entry.intersectionRatio < 0.5) {
+          if (!video.paused) {
+            video.pause();
+            const container = video.closest('.post-media-container');
+            if (container) {
+              const overlay = container.querySelector('.video-play-overlay');
+              if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.style.opacity = '1';
+                overlay.style.background = 'rgba(0,0,0,0.25)';
+                const playIcon = overlay.querySelector('i');
+                if (playIcon) {
+                  playIcon.setAttribute('data-lucide', 'play');
+                }
+                debouncedCreateIcons();
+              }
+            }
+          }
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.post-media-video, .reel-video').forEach(video => {
+      observer.observe(video);
+    });
+
+    const mutationObserver = new MutationObserver((mutations) => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const videos = node.querySelectorAll('.post-media-video, .reel-video');
+            videos.forEach(video => observer.observe(video));
+            if (node.classList.contains('post-media-video') || node.classList.contains('reel-video')) {
+              observer.observe(node);
+            }
+          }
+        });
+      });
+    });
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // --- DOUBLE CLICK TO LIKE ---
+  document.addEventListener('dblclick', async (e) => {
+    // For Posts
+    const postMediaContainer = e.target.closest('.post-media-container');
+    if (postMediaContainer) {
+      e.preventDefault();
+
+      const rect = postMediaContainer.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      triggerHeartExplosion(clickX, clickY, postMediaContainer);
+
+      const likeBtnAction = postMediaContainer.closest('article, .feed-card')
+        ? postMediaContainer.closest('article, .feed-card').querySelector('.like-btn-action')
+        : postMediaContainer.querySelector('.like-btn-action') || postMediaContainer.parentNode.querySelector('.like-btn-action');
+
+      if (likeBtnAction && !likeBtnAction.classList.contains('liked')) {
+        const postId = likeBtnAction.getAttribute('data-post-id');
+        if (postId) {
+          await togglePostLike(postId, likeBtnAction);
+        }
+      }
+      return;
+    }
+
+    // For Reels (Hubbings)
+    const reelCard = e.target.closest('.reel-card');
+    if (reelCard) {
+      e.preventDefault();
+
+      const rect = reelCard.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      triggerHeartExplosion(clickX, clickY, reelCard);
+
+      const likeBtnAction = reelCard.querySelector('.reel-like-action');
+      const heartBtn = likeBtnAction ? likeBtnAction.querySelector('.heart-btn') : null;
+
+      if (heartBtn && !heartBtn.classList.contains('liked')) {
+        const reelId = likeBtnAction.getAttribute('data-reel-id');
+        if (reelId) {
+          await toggleReelLike(reelId, heartBtn);
+        }
+      }
+      return;
+    }
+  });
+
+  setupVideoScrollObserver();
+
+  /* ========================================================= */
+  /* DM ENHANCEMENTS LOGIC */
+  /* ========================================================= */
+
+  // --- AI Spelling Assistant ---
+  const aiAssistantBtn = document.getElementById('chat-ai-assistant-btn');
+  const aiPopover = document.getElementById('ai-spelling-popover');
+  const aiContent = document.getElementById('ai-spelling-content');
+  const aiAcceptBtn = document.getElementById('ai-spelling-accept-btn');
+  const aiCancelBtn = document.getElementById('ai-spelling-cancel-btn');
+  const aiActions = document.getElementById('ai-spelling-actions');
+
+  let currentAiSuggestion = '';
+
+  if (aiAssistantBtn) {
+    aiAssistantBtn.addEventListener('click', () => {
+      const text = messageInput.value.trim();
+      if (!text) return;
+
+      // Simple mock AI Spelling logic
+      let suggestedText = text.replace(/\s{2,}/g, ' '); // remove double spaces
+      // Mock correction example: capitalize first letter if not
+      if (suggestedText.length > 0) {
+        suggestedText = suggestedText.charAt(0).toUpperCase() + suggestedText.slice(1);
+      }
+      // Very basic spelling fix mock
+      suggestedText = suggestedText.replace(/\bteh\b/g, 'the').replace(/\brecieve\b/g, 'receive');
+
+      if (suggestedText === text) {
+        aiContent.textContent = "No spelling corrections needed.";
+        aiActions.style.display = 'none';
+        currentAiSuggestion = '';
+      } else {
+        aiContent.textContent = suggestedText;
+        aiActions.style.display = 'flex';
+        currentAiSuggestion = suggestedText;
+      }
+      aiPopover.style.display = 'flex';
+    });
+  }
+  if (aiAcceptBtn) {
+    aiAcceptBtn.addEventListener('click', () => {
+      if (currentAiSuggestion) {
+        messageInput.value = currentAiSuggestion;
+      }
+      aiPopover.style.display = 'none';
+    });
+  }
+  if (aiCancelBtn) {
+    aiCancelBtn.addEventListener('click', () => {
+      aiPopover.style.display = 'none';
+    });
+  }
+
+  // --- Toast Notification ---
+  function showDMToast(msg) {
+    let toast = document.getElementById('dm-toast-notification');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'dm-toast-notification';
+      toast.className = 'dm-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  }
+
+  // --- Reply & Action Menu ---
+  const replyPreviewContainer = document.getElementById('chat-reply-preview-container');
+  const replyPreviewSender = document.getElementById('reply-preview-sender');
+  const replyPreviewText = document.getElementById('reply-preview-text');
+  const replyPreviewCloseBtn = document.getElementById('reply-preview-close-btn');
+
+  if (replyPreviewCloseBtn) {
+    replyPreviewCloseBtn.addEventListener('click', () => {
+      currentReplyToMessage = null;
+      replyPreviewContainer.style.display = 'none';
+    });
+  }
+
+  function activateReplyMode(msgId, rawText, senderName) {
+    currentReplyToMessage = { id: msgId, text: rawText, senderName: senderName };
+    replyPreviewSender.textContent = senderName;
+    replyPreviewText.textContent = rawText;
+    replyPreviewContainer.style.display = 'flex';
+    messageInput.focus();
+  }
+
+  if (messagesScroll) {
+    messagesScroll.addEventListener('dblclick', (e) => {
+      const bubble = e.target.closest('.chat-bubble');
+      if (bubble) {
+        const msgId = bubble.getAttribute('data-msg-id');
+        const rawText = bubble.getAttribute('data-raw-text') || 'Message';
+        const senderName = bubble.getAttribute('data-sender-name') || 'User';
+        activateReplyMode(msgId, rawText, senderName);
+      }
+    });
+
+    messagesScroll.addEventListener('click', (e) => {
+      const actionTrigger = e.target.closest('.message-action-trigger');
+      if (actionTrigger) {
+        const dropdown = actionTrigger.nextElementSibling;
+        if (dropdown && dropdown.classList.contains('message-action-dropdown')) {
+          dropdown.style.display = dropdown.style.display === 'flex' ? 'none' : 'flex';
+
+          // Close others
+          document.querySelectorAll('.message-action-dropdown').forEach(d => {
+            if (d !== dropdown) d.style.display = 'none';
+          });
+        }
+        return;
+      }
+
+      const replyBtn = e.target.closest('.action-reply');
+      if (replyBtn) {
+        const wrapper = replyBtn.closest('.message-bubble-wrapper');
+        const bubble = wrapper.querySelector('.chat-bubble');
+        if (bubble) {
+          const msgId = bubble.getAttribute('data-msg-id');
+          const rawText = bubble.getAttribute('data-raw-text') || 'Message';
+          const senderName = bubble.getAttribute('data-sender-name') || 'User';
+          activateReplyMode(msgId, rawText, senderName);
+        }
+        replyBtn.closest('.message-action-dropdown').style.display = 'none';
+        return;
+      }
+
+      const copyBtn = e.target.closest('.action-copy');
+      if (copyBtn) {
+        const wrapper = copyBtn.closest('.message-bubble-wrapper');
+        const bubble = wrapper.querySelector('.chat-bubble');
+        if (bubble) {
+          const rawText = bubble.getAttribute('data-raw-text') || '';
+          navigator.clipboard.writeText(rawText).then(() => {
+            showDMToast('Message copied');
+          });
+        }
+        copyBtn.closest('.message-action-dropdown').style.display = 'none';
+        return;
+      }
+
+      const forwardBtn = e.target.closest('.action-forward');
+      if (forwardBtn) {
+        const wrapper = forwardBtn.closest('.message-bubble-wrapper');
+        const bubble = wrapper.querySelector('.chat-bubble');
+        if (bubble) {
+          openForwardModal(bubble.getAttribute('data-msg-id'), bubble.getAttribute('data-raw-text') || 'Message');
+        }
+        forwardBtn.closest('.message-action-dropdown').style.display = 'none';
+        return;
+      }
+
+      const deleteBtn = e.target.closest('.action-delete');
+      if (deleteBtn) {
+        const wrapper = deleteBtn.closest('.message-bubble-wrapper');
+        const bubble = wrapper.querySelector('.chat-bubble');
+        if (bubble) {
+          openDeleteModal(bubble.getAttribute('data-msg-id'), wrapper);
+        }
+        deleteBtn.closest('.message-action-dropdown').style.display = 'none';
+        return;
+      }
+
+      // Close dropdowns when clicking elsewhere
+      document.querySelectorAll('.message-action-dropdown').forEach(d => {
+        d.style.display = 'none';
+      });
+
+      // Scroll to replied message if preview box clicked
+      const repliedBox = e.target.closest('.replied-message-box');
+      if (repliedBox) {
+        const replyId = repliedBox.getAttribute('data-reply-id');
+        if (replyId) {
+          const targetBubble = messagesScroll.querySelector(`.chat-bubble[data-msg-id="${replyId}"]`);
+          if (targetBubble) {
+            targetBubble.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetBubble.style.transition = 'background-color 0.5s';
+            const originalBg = targetBubble.style.backgroundColor;
+            targetBubble.style.backgroundColor = 'rgba(108, 59, 255, 0.3)';
+            setTimeout(() => {
+              targetBubble.style.backgroundColor = originalBg;
+            }, 1000);
+          }
+        }
+      }
+    });
+  }
+
+  // --- Forward Modal ---
+  const forwardModal = document.getElementById('forward-message-modal');
+  const forwardCloseBtn = document.getElementById('forward-close-btn');
+  const forwardCancelBtn = document.getElementById('forward-cancel-btn');
+  const forwardSendBtn = document.getElementById('forward-send-btn');
+  const forwardSearchInput = document.getElementById('forward-search-input');
+  const forwardContactsList = document.getElementById('forward-contacts-list');
+  let currentForwardMsgText = '';
+  let selectedForwardRecipients = [];
+
+  function openForwardModal(msgId, rawText) {
+    currentForwardMsgText = rawText;
+    selectedForwardRecipients = [];
+    forwardSearchInput.value = '';
+    forwardSendBtn.disabled = true;
+    forwardModal.classList.add('active');
+    populateForwardContacts();
+  }
+
+  function populateForwardContacts(query = '') {
+    if (!forwardContactsList) return;
+    forwardContactsList.innerHTML = '';
+
+    // Filter chatThreads based on query
+    const filtered = chatThreads.filter(t => t.user && (t.user.fullname || t.user.username).toLowerCase().includes(query.toLowerCase()));
+
+    if (filtered.length === 0) {
+      forwardContactsList.innerHTML = '<div style="color:var(--text-muted); font-size:0.9rem; text-align:center; padding:10px;">No contacts found</div>';
+      return;
+    }
+
+    filtered.forEach(t => {
+      const u = t.user;
+      const el = document.createElement('div');
+      el.className = 'forward-contact-item';
+      if (selectedForwardRecipients.includes(u._id)) {
+        el.classList.add('selected');
+      }
+      const avatarSrc = u.profilePic ? (u.profilePic.startsWith('http') ? u.profilePic : `${API_URL}${u.profilePic}`) : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+      el.innerHTML = `
+        <img src="${avatarSrc}" class="forward-contact-avatar" />
+        <span class="forward-contact-name">${u.fullname || u.username}</span>
+        <i data-lucide="check" class="forward-contact-check"></i>
+      `;
+
+      el.addEventListener('click', () => {
+        if (selectedForwardRecipients.includes(u._id)) {
+          selectedForwardRecipients = selectedForwardRecipients.filter(id => id !== u._id);
+          el.classList.remove('selected');
+        } else {
+          selectedForwardRecipients.push(u._id);
+          el.classList.add('selected');
+        }
+        forwardSendBtn.disabled = selectedForwardRecipients.length === 0;
+      });
+
+      forwardContactsList.appendChild(el);
+    });
+
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+  }
+
+  if (forwardSearchInput) {
+    forwardSearchInput.addEventListener('input', (e) => {
+      populateForwardContacts(e.target.value.trim());
+    });
+  }
+
+  if (forwardCloseBtn) forwardCloseBtn.addEventListener('click', () => forwardModal.classList.remove('active'));
+  if (forwardCancelBtn) forwardCancelBtn.addEventListener('click', () => forwardModal.classList.remove('active'));
+  if (forwardSendBtn) {
+    forwardSendBtn.addEventListener('click', async () => {
+      forwardSendBtn.disabled = true;
+      forwardSendBtn.textContent = 'Forwarding...';
+
+      const currentUser = getCurrentUser();
+      const token = localStorage.getItem('invibe_jwt_token');
+      if (!currentUser || !token) return;
+
+      try {
+        for (const recipientId of selectedForwardRecipients) {
+          const secretKey = getChatSecretKey(currentUser.id || currentUser._id, recipientId);
+          const encryptedText = encryptMessage(currentForwardMsgText, secretKey);
+
+          await fetch(`${API_URL}/api/chats/message`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              recipient: recipientId,
+              content: encryptedText
+            })
+          });
+        }
+        showDMToast('Message forwarded successfully');
+      } catch (err) {
+        console.error('Error forwarding message:', err);
+        showDMToast('Failed to forward message');
+      }
+
+      forwardModal.classList.remove('active');
+      forwardSendBtn.textContent = 'Forward';
+      loadChatThreads();
+    });
+  }
+
+  // --- Delete Modal Logic ---
+  const deleteModal = document.getElementById('delete-message-modal');
+  const deleteCloseBtn = document.getElementById('delete-close-btn');
+  const deleteCancelBtn = document.getElementById('delete-cancel-btn');
+  const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
+
+  let msgToDeleteId = null;
+  let msgToDeleteWrapper = null;
+
+  function openDeleteModal(msgId, wrapperElement) {
+    msgToDeleteId = msgId;
+    msgToDeleteWrapper = wrapperElement;
+    deleteConfirmBtn.disabled = false;
+    deleteConfirmBtn.textContent = 'Delete';
+    deleteModal.classList.add('active');
+  }
+
+  function closeDeleteModal() {
+    deleteModal.classList.remove('active');
+    msgToDeleteId = null;
+    msgToDeleteWrapper = null;
+  }
+
+  if (deleteCloseBtn) deleteCloseBtn.addEventListener('click', closeDeleteModal);
+  if (deleteCancelBtn) deleteCancelBtn.addEventListener('click', closeDeleteModal);
+  if (deleteConfirmBtn) {
+    deleteConfirmBtn.addEventListener('click', async () => {
+      if (!msgToDeleteId) return;
+
+      deleteConfirmBtn.disabled = true;
+      deleteConfirmBtn.textContent = 'Deleting...';
+
+      const token = localStorage.getItem('invibe_jwt_token');
+      if (!token) return closeDeleteModal();
+
+      try {
+        const res = await fetch(`${API_URL}/api/chats/message/${msgToDeleteId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          // Remove from UI
+          if (msgToDeleteWrapper) {
+            msgToDeleteWrapper.remove();
+          }
+
+          // Update chatFeeds state silently
+          if (state.currentChatThread && chatFeeds[state.currentChatThread]) {
+            chatFeeds[state.currentChatThread] = chatFeeds[state.currentChatThread].filter(m => {
+              return (m._id || m.id) !== msgToDeleteId;
+            });
+          }
+
+          showDMToast('Message deleted');
+
+          // Refresh thread list to update preview (if it was the last message)
+          loadChatThreads();
+        } else {
+          let errData;
+          try {
+            errData = await res.json();
+          } catch (e) {
+            errData = await res.text();
+          }
+          const currentUser = getCurrentUser() || {};
+          console.error("Supabase Error Details:", {
+            error: errData,
+            table: 'messages',
+            message_id: msgToDeleteId,
+            authenticated_user_id: currentUser.id || currentUser._id,
+            response: res.status
+          });
+          throw new Error((errData && errData.error) || 'Failed to delete message');
+        }
+      } catch (err) {
+        console.error('Error deleting message:', err);
+        showDMToast('Failed to delete message');
+      }
+
+      closeDeleteModal();
+    });
+  }
 
 });
