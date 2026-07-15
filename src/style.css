@@ -75,7 +75,7 @@ body {
   background: var(--bg-app);
   background-size: 180% 180%;
   color: var(--text-main);
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   position: relative;
   transition: background 0.75s ease;
@@ -130,7 +130,7 @@ body::after {
 .app-container {
   display: flex !important;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   z-index: 1;
   position: relative;
@@ -435,7 +435,7 @@ body.dark-theme .header-logo-text .brand-hubble {
   margin: 0 auto;
   padding: 20px 24px;
   flex: 1;
-  height: calc(100vh - 70px); /* Lock layout height below header */
+  height: calc(100dvh - 70px); /* Lock layout height below header */
   overflow: hidden;
   align-items: start;
   transition: var(--transition-smooth);
@@ -2720,7 +2720,7 @@ body.chats-view-active #app-main-layout {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   background: rgba(8, 8, 12, 0.85);
   backdrop-filter: blur(15px);
   z-index: 99999;
@@ -4353,7 +4353,7 @@ body.dark-theme .floating-nav-container {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -4432,7 +4432,7 @@ body.dark-theme .floating-nav-container {
   width: 420px;
   max-width: 100vw;
   height: 740px;
-  max-height: 100vh;
+  max-height: 100dvh;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -4699,7 +4699,7 @@ body.dark-theme .floating-nav-container {
   /* Chat layout adjustment */
   .chats-layout-grid {
     grid-template-columns: 1fr;
-    height: calc(100vh - 180px);
+    height: calc(100dvh - 180px);
   }
   
   .chat-inbox-sidebar {
@@ -5868,7 +5868,7 @@ body.dark-theme .floating-nav-container {
   }
   
   .chat-window-main {
-    height: calc(100vh - 140px) !important;
+    height: calc(100dvh - 140px) !important;
     max-height: 80vh !important;
   }
   
@@ -6011,7 +6011,7 @@ body.dark-theme .floating-nav-container {
 
   /* Adjust chat window height since footer is hidden */
   .chat-window-main {
-    height: calc(100vh - 100px) !important;
+    height: calc(100dvh - 100px) !important;
     max-height: 90vh !important;
   }
 
@@ -6700,7 +6700,7 @@ body.light-theme #relations-list-modal * {
   .profile-post-viewer-card {
     width: 100vw;
     max-width: 100vw;
-    max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0;
   }
 }
@@ -7203,10 +7203,21 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
    PWA & MOBILE PERFORMANCE OPTIMIZATIONS
    ============================================================== */
 
-/* 1. Disable double-tap zoom delay, 2. Disable pull-to-refresh bounce, 3. Disable iOS tap highlight flicker */
-body, html {
-  touch-action: manipulation;
+/* Prevent full-page browser elastic bouncing/rubber-banding */
+body {
   overscroll-behavior-y: contain;
+}
+
+/* Disable double-tap to zoom delay on mobile inputs and remove default tap highlights */
+input, 
+button, 
+a, 
+select, 
+textarea, 
+.click-target,
+.message-action-item,
+.action-btn {
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -7214,6 +7225,10 @@ body, html {
 body, 
 main,
 .scrollable-container,
+.app-container,
+.feed-container,
+.messages-container,
+.chat-window-main,
 [style*="overflow-y: auto"], 
 [style*="overflow-y: scroll"] {
   transform: translate3d(0, 0, 0);
