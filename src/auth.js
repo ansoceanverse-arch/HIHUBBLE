@@ -309,7 +309,7 @@ export function initAuth() {
 
       if (!res.ok) {
         if (data && data.devFallbackOtp) {
-          alert(`Notice: OTP transmission failed. Fallback mode is active. Please check your Node.js server terminal logs for the 6-digit verification code!`);
+          alert(`Notice: OTP transmission failed (SMTP/Twilio not configured).\n\nFallback mode is active.\nYour Verification Code is: ${data.devFallbackOtp}`);
           data.success = true;
           return data;
         }
