@@ -210,8 +210,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .glass-panel {
   background: var(--card-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   border: var(--card-border);
   box-shadow: var(--card-glow);
   border-radius: var(--radius-lg);
@@ -233,8 +233,8 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   padding: 16px 24px;
   background: color-mix(in srgb, var(--card-bg) 70%, transparent);
-  backdrop-filter: blur(25px) saturate(120%);
-  -webkit-backdrop-filter: blur(25px) saturate(120%);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   border-bottom: var(--card-border);
   transition: var(--transition-smooth);
 }
@@ -757,7 +757,7 @@ body.chats-view-active #app-main-layout {
 }
 
 .search-card.mini-card {
-  background: rgba(255,255,255,0.05);
+  background: rgba(20, 10, 40, 0.85);
   border: 1px solid rgba(255,255,255,0.14);
   border-radius: 20px;
   padding: 18px;
@@ -848,7 +848,7 @@ body.chats-view-active #app-main-layout {
 }
 
 .search-recent-panel {
-  background: rgba(255,255,255,0.05);
+  background: rgba(20, 10, 40, 0.85);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 20px;
   padding: 18px;
@@ -941,8 +941,8 @@ body.chats-view-active #app-main-layout {
   left: 0;
   flex-direction: column;
   background: rgba(15, 5, 25, 0.10);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   border: 1px solid rgba(168, 85, 247, 0.15);
   border-radius: var(--radius-md);
   padding: 12px;
@@ -1116,8 +1116,8 @@ body.chats-view-active #app-main-layout {
 .feed-card {
   position: relative;
   background: var(--card-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   border: var(--card-border);
   box-shadow: var(--card-glow);
   border-radius: var(--radius-lg);
@@ -1263,7 +1263,7 @@ body.chats-view-active #app-main-layout {
 
 .play-btn-big {
   background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+/* backdrop-filter removed for performance */
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
   width: 64px;
@@ -1313,8 +1313,8 @@ body.chats-view-active #app-main-layout {
   height: 44px;
   border-radius: var(--radius-circle);
   background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: white;
   display: flex;
@@ -1431,8 +1431,8 @@ body.chats-view-active #app-main-layout {
   top: 0;
   z-index: 100;
   background: var(--card-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   padding: 16px 0 14px;
 }
 
@@ -1662,8 +1662,8 @@ body.chats-view-active #app-main-layout {
   gap: 16px;
   align-items: center;
   background: rgba(7, 17, 37, 0.45);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   border: 1px solid rgba(140, 212, 255, 0.15);
   border-radius: 36px;
   padding: 20px 6px;
@@ -1856,7 +1856,7 @@ body.chats-view-active #app-main-layout {
 }
 
 .icon-btn {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(20, 10, 40, 0.85);
   border: var(--card-border);
   color: var(--text-main);
   width: 32px;
@@ -1896,7 +1896,7 @@ body.chats-view-active #app-main-layout {
   right: 0;
   width: 180px;
   background: var(--bubble-bg);
-  backdrop-filter: blur(25px);
+/* backdrop-filter removed for performance */
   border: var(--card-border);
   border-radius: var(--radius-md);
   box-shadow: var(--card-glow);
@@ -2506,7 +2506,7 @@ body.chats-view-active #app-main-layout {
   top: 16px;
   right: 16px;
   background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(10px);
+/* backdrop-filter removed for performance */
   color: white;
   font-size: 11px;
   font-weight: 600;
@@ -2647,7 +2647,7 @@ body.chats-view-active #app-main-layout {
   top: 20px;
   left: 20px;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
+/* backdrop-filter removed for performance */
   color: white;
   padding: 6px 14px;
   border-radius: var(--radius-md);
@@ -2722,7 +2722,7 @@ body.chats-view-active #app-main-layout {
   width: 100vw;
   height: 100dvh;
   background: rgba(8, 8, 12, 0.85);
-  backdrop-filter: blur(15px);
+/* backdrop-filter removed for performance */
   z-index: 99999;
   display: flex;
   align-items: center;
@@ -2919,7 +2919,7 @@ body.chats-view-active #app-main-layout {
   border-radius: var(--radius-circle);
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.25);
-  backdrop-filter: blur(10px);
+/* backdrop-filter removed for performance */
   color: white;
   display: flex;
   justify-content: center;
@@ -3550,7 +3550,7 @@ body.chats-view-active #app-main-layout {
 }
 
 .attachment-action-btn {
-  background: rgba(255,255,255,0.05);
+  background: rgba(20, 10, 40, 0.85);
   border: var(--card-border);
   color: var(--text-main);
   padding: 10px;
@@ -4173,8 +4173,8 @@ body.dark-theme .floating-nav-container {
   gap: 16px;
   width: max-content;
   background: var(--nav-glass-bg);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   border: 1px solid var(--nav-glass-border);
   padding: 10px 20px;
   border-radius: 100px;
@@ -4200,8 +4200,8 @@ body.dark-theme .floating-nav-container {
   background: transparent;
   border: none;
   box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -4276,7 +4276,7 @@ body.dark-theme .floating-nav-container {
 .radial-badge {
   position: static;
   background: transparent;
-  backdrop-filter: none;
+/* backdrop-filter removed for performance */
   color: var(--nav-icon-color);
   font-size: 11px;
   font-weight: 600;
@@ -4309,8 +4309,8 @@ body.dark-theme .floating-nav-container {
   background: rgba(108, 59, 255, 0.25);
   border-radius: 50%;
   box-shadow: 0 0 16px rgba(108, 59, 255, 0.6), inset 0 0 8px rgba(108, 59, 255, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   z-index: 0;
   pointer-events: none;
   opacity: 0;
@@ -4355,8 +4355,8 @@ body.dark-theme .floating-nav-container {
   width: 100vw;
   height: 100dvh;
   background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   border: none;
   box-shadow: none;
   z-index: 990;
@@ -4376,7 +4376,7 @@ body.dark-theme .floating-nav-container {
   left: 50%;
   transform: translateX(-50%) translateY(20px);
   background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(15px);
+/* backdrop-filter removed for performance */
   border: 1px solid rgba(255,255,255,0.25);
   padding: 10px 20px;
   border-radius: var(--radius-md);
@@ -4403,8 +4403,8 @@ body.dark-theme .floating-nav-container {
   right: 0;
   bottom: 0;
   background: rgba(4, 5, 12, 0.45);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -4566,7 +4566,7 @@ body.dark-theme .floating-nav-container {
 .story-viewer-footer input {
   flex: 1;
   background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+/* backdrop-filter removed for performance */
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
   border-radius: var(--radius-xl);
@@ -4844,8 +4844,8 @@ body.dark-theme .floating-nav-container {
   border: var(--card-border);
   box-shadow: var(--card-glow);
   background: var(--card-bg);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   display: flex;
   flex-direction: column;
   color: var(--text-main);
@@ -4958,7 +4958,7 @@ body.dark-theme .floating-nav-container {
 .upload-badge-btn {
   position: absolute;
   background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(5px);
+/* backdrop-filter removed for performance */
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
   cursor: pointer;
@@ -5070,7 +5070,7 @@ body.dark-theme .floating-nav-container {
 
 .progress-bar-container {
   height: 6px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(20, 10, 40, 0.90);
   border-radius: 3px;
   overflow: hidden;
   margin-top: 4px;
@@ -5237,8 +5237,8 @@ body.dark-theme .floating-nav-container {
   position: absolute;
   inset: 0;
   background: linear-gradient(to bottom, rgba(4,5,12,0.08), rgba(4,5,12,0.42));
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   z-index: 35;
   display: none;
   justify-content: center;
@@ -5330,7 +5330,7 @@ body.dark-theme .floating-nav-container {
 }
 
 .modal-close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(20, 10, 40, 0.90);
   color: var(--text-main);
 }
 
@@ -5389,7 +5389,7 @@ body.dark-theme .floating-nav-container {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   gap: 10px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(10, 5, 20, 0.95);
 }
 
 .comments-footer input {
@@ -5479,8 +5479,8 @@ body.dark-theme .floating-nav-container {
   bottom: calc(100% + 12px);
   right: 16px;
   background: rgba(5, 16, 34, 0.82);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   border: 1px solid rgba(133, 205, 255, 0.18);
   box-shadow: 0 18px 45px rgba(1, 10, 22, 0.5);
   border-radius: 18px;
@@ -5573,7 +5573,7 @@ body.dark-theme .floating-nav-container {
 /* Premium Image Chat Bubbles */
 .chat-bubble.image-bubble {
   padding: 4px !important;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(20, 10, 40, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-lg);
   max-width: 250px;
@@ -5604,8 +5604,8 @@ body.dark-theme .floating-nav-container {
   width: 90%;
   max-width: 500px;
   background: rgba(15, 15, 25, 0.7);
-  backdrop-filter: blur(30px) saturate(190%);
-  -webkit-backdrop-filter: blur(30px) saturate(190%);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-xl);
   overflow: hidden;
@@ -6055,8 +6055,8 @@ body.dark-theme .floating-nav-container {
   z-index: 1000;
   max-height: 320px;
   overflow-y: auto;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
   padding: 8px;
 }
 
@@ -6337,7 +6337,7 @@ body.dark-theme .floating-nav-container {
 }
 
 .notification-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(20, 10, 40, 0.85);
 }
 
 .notification-item.unread {
@@ -6525,7 +6525,7 @@ body.dark-theme .floating-nav-container {
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(20, 10, 40, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
   margin-top: 4px;
@@ -6612,7 +6612,7 @@ body.light-theme #relations-list-modal * {
 /* ==================== STORY (HUB) LIKE BUTTON ==================== */
 .story-like-btn {
   background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+/* backdrop-filter removed for performance */
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
   min-width: 56px;
@@ -6931,7 +6931,7 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(10, 5, 20, 0.95);
   border-left: 3px solid var(--primary);
   margin-bottom: 8px;
   border-radius: var(--radius-sm);
@@ -6976,7 +6976,7 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
   opacity: 0.9;
 }
 .chat-bubble.sent .replied-message-box {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(20, 10, 40, 0.90);
   border-left-color: #fff;
 }
 .replied-message-box .replied-sender {
@@ -7009,8 +7009,8 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
   display: none;
   flex-direction: column;
   gap: 8px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* backdrop-filter removed for performance */
+/* backdrop-filter removed for performance */
 }
 .ai-spelling-header {
   display: flex;
@@ -7027,7 +7027,7 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
 .ai-spelling-content {
   font-size: 0.9rem;
   color: var(--text);
-  background: rgba(0,0,0,0.2);
+  background: rgba(10, 5, 20, 0.95);
   padding: 8px;
   border-radius: 4px;
   min-height: 24px;
@@ -7049,7 +7049,7 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
   color: #fff;
 }
 .ai-spelling-btn-cancel {
-  background: rgba(255,255,255,0.1);
+  background: rgba(20, 10, 40, 0.90);
   color: #fff;
 }
 
@@ -7073,7 +7073,7 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
 .message-action-trigger {
   opacity: 0;
   pointer-events: none;
-  background: rgba(255,255,255,0.1);
+  background: rgba(20, 10, 40, 0.90);
   border: none;
   border-radius: 50%;
   width: 24px;
@@ -7104,7 +7104,7 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
   display: none;
   flex-direction: column;
   min-width: 120px;
-  backdrop-filter: blur(10px);
+/* backdrop-filter removed for performance */
 }
 .message-bubble-wrapper.sent-wrapper .message-action-dropdown {
   right: 32px;
@@ -7129,7 +7129,7 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
   width: 100%;
 }
 .message-action-item:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(20, 10, 40, 0.90);
 }
 .message-action-item i {
   width: 14px;
@@ -7147,7 +7147,7 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
   transition: background 0.2s;
 }
 .forward-contact-item:hover {
-  background: rgba(255,255,255,0.05);
+  background: rgba(20, 10, 40, 0.85);
 }
 .forward-contact-item.selected {
   background: rgba(108, 59, 255, 0.2);
@@ -7186,7 +7186,7 @@ body.light-theme .reel-comments-modal .comments-list::-webkit-scrollbar-thumb {
   transition: opacity 0.3s, transform 0.3s;
   pointer-events: none;
   z-index: 9999;
-  backdrop-filter: blur(5px);
+/* backdrop-filter removed for performance */
 }
 .dm-toast.show {
   opacity: 1;
@@ -7239,4 +7239,22 @@ main,
 /* Optional: Smooth out any image rendering artifacts during scroll */
 img {
   transform: translateZ(0);
+}
+
+/* Voice Note Preview Bar */
+.chat-voice-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(108, 59, 255, 0.08);
+  border-left: 4px solid var(--pink);
+  margin-bottom: 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  gap: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+/* backdrop-filter removed for performance */
 }

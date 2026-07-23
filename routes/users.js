@@ -5,61 +5,112 @@ import { authenticateToken } from '../utils.js';
 const router = express.Router();
 
 router.post('/api/users/profile', authenticateToken, async (req, res) => {
-  const { profileImage, bio, fullName, username, phoneNumber, preferred2faMethod } = req.body;
+  const { profileImage, bio, fullName, username, phoneNumber } = req.body;
   try {
-    const { data: user, error: userError } = await supabase.from('users').select('*').eq('_id', req.user.id).single();
-    if (userError || !user) return res.status(404).json({ error: 'User not found.' });
+    const userId = req.user.id;
+    let newProfileImageUrl = null;
 
+    // 1. If there is a profile image in base64, upload it to Supabase Storage
+    if (profileImage && profileImage.startsWith('data:image')) {
+      const matches = profileImage.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        const ext = matches[1];
+        const base64Data = matches[2];
+        const buffer = Buffer.from(base64Data, 'base64');
+        const filename = `${userId}/avatar-${Date.now()}.${ext}`;
+
+        // Upload using native fetch to bypass Supabase JS client Auth header interference
+        const uploadRes = await fetch(`${process.env.SUPABASE_URL}/storage/v1/object/profile-images/${filename}`, {
+          method: 'POST',
+          headers: {
+            'apikey': process.env.SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${req.token}`,
+            'Content-Type': `image/${ext}`
+          },
+          body: buffer
+        });
+
+        if (!uploadRes.ok) {
+          const errData = await uploadRes.json();
+          throw new Error(errData.message || 'Failed to upload profile image to storage.');
+        }
+
+        // The public URL is a deterministic path
+        newProfileImageUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/profile-images/${filename}`;
+      } else if (profileImage.startsWith('http')) {
+        // If it's already a URL, just use it
+        newProfileImageUrl = profileImage;
+      }
+    } else if (profileImage && profileImage.startsWith('http')) {
+       newProfileImageUrl = profileImage;
+    }
+
+    // 2. Prepare updates for the PostgreSQL `profiles` table
     const updates = {};
-    if (profileImage !== undefined) updates.profileImage = profileImage;
+    if (newProfileImageUrl) updates.profile_image_url = newProfileImageUrl;
     if (bio !== undefined) updates.bio = bio;
-    if (fullName !== undefined) updates.fullName = fullName;
+    if (fullName !== undefined) updates.full_name = fullName;
+    
+    // Check username uniqueness if provided
     if (username !== undefined) {
       const trimmedUsername = username.trim().toLowerCase();
-      const { data: existingUser } = await supabase.from('users').select('_id').eq('username', trimmedUsername).neq('_id', req.user.id).single();
-      if (existingUser) return res.status(400).json({ error: 'Username already taken.' });
+      // Check using native fetch or client. We can use native fetch.
+      const checkRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/profiles?username=eq.${trimmedUsername}&id=neq.${userId}&select=id`, {
+        method: 'GET',
+        headers: { 'apikey': process.env.SUPABASE_ANON_KEY, 'Authorization': `Bearer ${req.token}` }
+      });
+      const checkData = await checkRes.json();
+      if (checkData && checkData.length > 0) {
+        return res.status(400).json({ error: 'Username already taken.' });
+      }
       updates.username = trimmedUsername;
     }
 
     if (phoneNumber !== undefined) {
       let targetNumber = phoneNumber.trim().replace(/\s+/g, '');
       if (targetNumber && !targetNumber.startsWith('+')) {
-        if (targetNumber.length === 10) {
-          targetNumber = '+91' + targetNumber;
-        } else {
-          return res.status(400).json({ error: "Phone number must include a country code starting with '+' (e.g. +919347712945)" });
-        }
+        if (targetNumber.length === 10) targetNumber = '+91' + targetNumber;
+        else return res.status(400).json({ error: "Phone number must include a country code starting with '+' (e.g. +919347712945)" });
       }
-      updates.phoneNumber = targetNumber || '';
+      updates.phone_number = targetNumber || null;
     }
 
-    if (preferred2faMethod !== undefined) {
-      if (preferred2faMethod && !['email', 'sms'].includes(preferred2faMethod)) {
-        return res.status(400).json({ error: 'Preferred 2FA method must be either "email" or "sms"' });
-      }
-      updates.preferred2faMethod = preferred2faMethod || 'email';
+    // 3. Update the profile
+    const updateRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': process.env.SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${req.token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(updates)
+    });
+
+    if (!updateRes.ok) {
+      const errData = await updateRes.json();
+      throw new Error(errData.message || 'Failed to update profile in database.');
     }
 
-    const { data: updatedUser, error: updateError } = await supabase.from('users').update(updates).eq('_id', req.user.id).select().single();
-    if (updateError) throw updateError;
+    const updatedProfiles = await updateRes.json();
+    const updatedUser = updatedProfiles[0];
 
+    // Return the updated user mapped to the camelCase fields expected by frontend
     res.json({
       success: true,
       message: 'Profile updated successfully.',
       user: {
-        id: updatedUser._id,
-        fullName: updatedUser.fullName,
+        id: updatedUser.id,
+        fullName: updatedUser.full_name,
         email: updatedUser.email,
         username: updatedUser.username,
-        dob: updatedUser.dob,
-        age: updatedUser.age,
-        profileImage: updatedUser.profileImage,
+        profileImage: updatedUser.profile_image_url,
         bio: updatedUser.bio,
-        phoneNumber: updatedUser.phoneNumber,
-        preferred2faMethod: updatedUser.preferred2faMethod
+        phoneNumber: updatedUser.phone_number
       }
     });
   } catch (err) {
+    console.error('Profile update error:', err);
     res.status(500).json({ error: err.message });
   }
 });

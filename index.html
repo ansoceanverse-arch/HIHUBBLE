@@ -1,22 +1,16 @@
-<!doctype html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Title and Meta Description (SEO Best Practice) -->
   <title>Hi-HUBBLE | Next-Gen Social Media Prototype</title>
-  <meta name="description"
-    content="Experience Hi-HUBBLE: A premium glassmorphism-based responsive social media platform prototype with interactive horizontal bubble navigation, real-time simulated chats, video calls, games, and high-fidelity micro-interactions." />
+  <meta name="description" content="Experience Hi-HUBBLE: A premium glassmorphism-based responsive social media platform prototype with interactive horizontal bubble navigation, real-time simulated chats, video calls, games, and high-fidelity micro-interactions.">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Outfit:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
 
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -40,11 +34,10 @@
           <div class="brand-bubble-frame">
             <div class="brand-bubble-glass">
               <div class="brand-bubble-mascot">
-                <img src="/hihubble-mascot-circle.png" alt="Hi-Hubble Mascot" class="brand-bubble-mascot-img" />
+                <img src="/hihubble-mascot-circle.png" alt="Hi-Hubble Mascot" class="brand-bubble-mascot-img">
               </div>
               <div class="brand-bubble-text">
-                <span class="brand-hi">Hi</span><span class="brand-hyphen">-</span><span
-                  class="brand-hubble">HUBBLE</span>
+                <span class="brand-hi">Hi</span><span class="brand-hyphen">-</span><span class="brand-hubble">HUBBLE</span>
                 <div class="brand-heart">❤️</div>
               </div>
               <div class="brand-bubble-footer">
@@ -76,7 +69,7 @@
       <!-- LEFT PANEL -->
       <div class="auth-left-panel">
         <div class="auth-mascot-frame">
-          <img src="/hihubble-mascot-circle.png" alt="Hi-Hubble Mascot" class="mascot-img" />
+          <img src="/hihubble-mascot-circle.png" alt="Hi-Hubble Mascot" class="mascot-img">
           <div class="auth-floating-icon auth-icon-heart"><i data-lucide="heart"></i></div>
           <div class="auth-floating-icon auth-icon-bubble"><i data-lucide="message-square"></i></div>
         </div>
@@ -95,41 +88,40 @@
         <form id="auth-form" class="auth-form">
           <div class="input-group signup-only">
             <i data-lucide="user"></i>
-            <input type="text" id="auth-fullname" placeholder="Full Name" required />
+            <input type="text" id="auth-fullname" placeholder="Full Name" required="">
           </div>
           <div class="input-group signup-only">
             <i data-lucide="mail"></i>
-            <input type="email" id="auth-email" placeholder="Email Address" required />
+            <input type="email" id="auth-email" placeholder="Email Address" required="">
           </div>
           <div class="input-group signup-only">
             <i data-lucide="phone"></i>
-            <input type="tel" id="auth-phone" placeholder="Phone Number (e.g. +91 98765 43210)" />
+            <input type="tel" id="auth-phone" placeholder="Phone Number (e.g. +91 98765 43210)">
           </div>
           <div class="input-group">
             <i data-lucide="user-check"></i>
-            <input type="text" id="auth-username" placeholder="Username" required />
+            <input type="text" id="auth-username" placeholder="Username" required="">
           </div>
           <div class="input-group">
             <i data-lucide="key"></i>
-            <input type="password" id="auth-password" class="has-toggle" placeholder="Password" required />
+            <input type="password" id="auth-password" class="has-toggle" placeholder="Password" required="">
             <button type="button" class="password-toggle-btn" data-target="auth-password" aria-label="Toggle password visibility">
               <i data-lucide="eye"></i>
             </button>
           </div>
-          <div class="forgot-link-container signin-only"
-            style="width: 100%; display: flex; justify-content: flex-end; margin-top: -8px; margin-bottom: 8px;">
+          <div class="forgot-link-container signin-only" style="width: 100%; display: flex; justify-content: flex-end; margin-top: -8px; margin-bottom: 8px;">
             <a href="#" id="auth-forgot-btn" class="forgot-password-link">Forgot Password?</a>
           </div>
           <div class="input-group forgot-only" style="display: none;">
             <i data-lucide="key"></i>
-            <input type="password" id="auth-confirm-password" class="has-toggle" placeholder="Confirm Password" />
+            <input type="password" id="auth-confirm-password" class="has-toggle" placeholder="Confirm Password">
             <button type="button" class="password-toggle-btn" data-target="auth-confirm-password" aria-label="Toggle password visibility">
               <i data-lucide="eye"></i>
             </button>
           </div>
           <div class="input-group date-group signup-only">
             <i data-lucide="calendar"></i>
-            <input type="date" id="auth-dob" required />
+            <input type="date" id="auth-dob" required="">
           </div>
           <div class="signup-only two-factor-preference-container" style="width: 100%; margin-bottom: 12px;">
             <div class="two-factor-label">Preferred 2FA OTP Method</div>
@@ -149,7 +141,7 @@
             <label>Yes, I am over 18 years old.</label>
           </div>
           <p id="age-warning" class="age-warning signup-only">You must be at least 18 years old.</p>
-          <button type="submit" id="create-account-btn" class="auth-submit-btn" disabled>Create Account</button>
+          <button type="submit" id="create-account-btn" class="auth-submit-btn" disabled="">Create Account</button>
         </form>
         <div class="auth-footer">
           <span id="auth-toggle-text">Already have an account?</span> <a href="#" id="auth-toggle-btn">Sign In</a><br>
@@ -177,12 +169,12 @@
       <p id="otp-instruction-text">Please enter the 6-digit verification code sent to your email address.</p>
 
       <div class="otp-input-container">
-        <input type="text" maxlength="1" class="otp-input" data-index="0" required />
-        <input type="text" maxlength="1" class="otp-input" data-index="1" required />
-        <input type="text" maxlength="1" class="otp-input" data-index="2" required />
-        <input type="text" maxlength="1" class="otp-input" data-index="3" required />
-        <input type="text" maxlength="1" class="otp-input" data-index="4" required />
-        <input type="text" maxlength="1" class="otp-input" data-index="5" required />
+        <input type="text" maxlength="1" class="otp-input" data-index="0" required="">
+        <input type="text" maxlength="1" class="otp-input" data-index="1" required="">
+        <input type="text" maxlength="1" class="otp-input" data-index="2" required="">
+        <input type="text" maxlength="1" class="otp-input" data-index="3" required="">
+        <input type="text" maxlength="1" class="otp-input" data-index="4" required="">
+        <input type="text" maxlength="1" class="otp-input" data-index="5" required="">
       </div>
 
       <p id="otp-error-msg" class="otp-error-msg"></p>
@@ -207,14 +199,14 @@
 
       <div class="profile-upload-area">
         <div class="profile-preview-wrapper" id="profile-preview-container" style="display:none;">
-          <img id="profile-preview-img" src="" alt="Profile Preview" />
+          <img id="profile-preview-img" src="" alt="Profile Preview">
           <button type="button" class="icon-btn remove-img-btn" id="remove-profile-img"><i data-lucide="refresh-cw"></i>
             Retake</button>
         </div>
 
         <div class="camera-container active" id="camera-container">
           <div class="camera-viewfinder">
-            <video id="camera-video" autoplay playsinline></video>
+            <video id="camera-video" autoplay="" playsinline=""></video>
             <div class="camera-face-guide"></div>
             <div class="camera-scanner-line"></div>
             <div class="camera-scanning-grid"></div>
@@ -223,14 +215,14 @@
             </div>
           </div>
           <button type="button" class="capture-btn" id="capture-photo-btn">
-            <i data-lucide="aperture"></i> Verify & Capture
+            <i data-lucide="aperture"></i> Verify &amp; Capture
           </button>
           <canvas id="camera-canvas" style="display:none;"></canvas>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="auth-submit-btn" id="finish-profile-btn" disabled>Finish Setup</button>
+        <button type="button" class="auth-submit-btn" id="finish-profile-btn" disabled="">Finish Setup</button>
       </div>
     </div>
   </div>
@@ -245,7 +237,7 @@
       <div class="header-center" style="position: relative; display: flex; justify-content: center; flex: 1;">
         <div class="app-logo" id="logo-button">
           <div class="header-logo-icon">
-            <img src="/hihubble-mascot-circle.png" alt="Hi-Hubble" />
+            <img src="/hihubble-mascot-circle.png" alt="Hi-Hubble">
           </div>
           <div class="header-logo-text">
             <span class="brand-hi">Hi</span><span class="brand-hyphen">-</span><span class="brand-hubble">HUBBLE</span>
@@ -285,8 +277,7 @@
         </button>
 
         <div class="header-profile" id="header-profile-avatar">
-          <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-            alt="Your Profile" />
+          <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Your Profile">
         </div>
       </div>
     </header>
@@ -299,8 +290,7 @@
         <div class="sidebar-card profile-preview-card glass-panel">
           <div class="card-cover-bg"></div>
           <div class="profile-preview-avatar">
-            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-              alt="Profile avatar" />
+            <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Profile avatar">
           </div>
           <div class="profile-preview-info">
             <h3>&nbsp; </h3>
@@ -359,8 +349,7 @@
         <!-- ==================== VIEW: HOME FEED ==================== -->
         <div id="view-home" class="view-panel active">
 
-          <div class="home-top-bar"
-            style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 2px; position: relative; z-index: 50;">
+          <div class="home-top-bar" style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 2px; position: relative; z-index: 50;">
             <!-- STORIES SECTION -->
             <div class="stories-wrapper" style="position: relative;">
               <div class="stories-scroll" id="stories-scroll">
@@ -368,19 +357,21 @@
                 <!-- HUBS -->
                 <div class="story-card current-user" id="story-btn-current">
                   <div class="story-avatar-container">
-                    <img
-                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80"
-                      alt="HUBS" />
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&amp;fit=crop&amp;w=150&amp;h=150&amp;q=80" alt="HUBS">
                     <button class="story-add-btn" id="add-story-file-trigger"><i data-lucide="plus"></i></button>
                     <!-- Simulated input -->
-                    <input type="file" id="story-file-input" style="display:none;" accept="image/*" />
+                    <input type="file" id="story-file-input" style="display:none;" accept="image/*">
                   </div>
-                  <div
-                    style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; cursor: pointer;"
-                    onclick="this.closest('.stories-wrapper').classList.toggle('dropdown-open')">
+                  <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; cursor: pointer;" onclick="this.closest('.stories-wrapper').classList.toggle('dropdown-open')">
                     <span class="story-username" style="margin: 0;">HUBBS</span>
                     <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
                   </div>
+                </div>
+                <div class="story-card" id="story-drafts-btn" style="display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;">
+                  <div class="story-avatar-container" style="background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; width: 68px; height: 68px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);">
+                    <i data-lucide="file-edit" style="color: white;"></i>
+                  </div>
+                  <span class="story-username" style="margin-top: 4px;">Drafts</span>
                 </div>
 
               </div>
@@ -390,7 +381,7 @@
             <div class="search-container-home" style="flex: 1; position: relative; margin-top: 12px;">
               <div class="search-bar">
                 <i data-lucide="search" class="search-icon"></i>
-                <input type="text" placeholder="Search Hubbs" id="global-search" autocomplete="off" />
+                <input type="text" placeholder="Search Hubbs" id="global-search" autocomplete="off">
               </div>
               <div id="search-results-dropdown" class="search-results-dropdown glass-panel" style="display: none;">
                 <div class="search-results-list" id="search-results-list"></div>
@@ -401,43 +392,28 @@
           </div>
 
           <!-- MEDIUM CREATE POST CARD -->
-          <div class="create-post-card glass-panel"
-            style="margin: 2px 0 8px 0; padding: 10px 16px; border-radius: var(--radius-lg); background: var(--card-bg); border: var(--card-border); box-shadow: var(--card-glow); display: flex; flex-direction: column; gap: 6px; position: relative;">
+          <div class="create-post-card glass-panel" style="margin: 2px 0 8px 0; padding: 10px 16px; border-radius: var(--radius-lg); background: var(--card-bg); border: var(--card-border); box-shadow: var(--card-glow); display: flex; flex-direction: column; gap: 6px; position: relative;">
             <div style="display: flex; align-items: flex-start; gap: 12px;">
-              <img
-                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"
-                id="create-post-user-avatar"
-                style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);"
-                alt="User Avatar" />
-              <textarea id="create-post-caption" placeholder="Share a hub with the world..."
-                style="flex: 1; min-height: 38px; background: transparent; border: none; outline: none; color: var(--text-main); font-family: var(--font-main); font-size: 14px; resize: none; padding-top: 6px;"
-                required></textarea>
+              <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&amp;fit=crop&amp;w=150&amp;h=150&amp;q=80" id="create-post-user-avatar" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);" alt="User Avatar">
+              <textarea id="create-post-caption" placeholder="Share a hub with the world..." style="flex: 1; min-height: 38px; background: transparent; border: none; outline: none; color: var(--text-main); font-family: var(--font-main); font-size: 14px; resize: none; padding-top: 6px;" required=""></textarea>
             </div>
 
             <!-- File preview -->
-            <div id="create-post-preview-container"
-              style="display: none; position: relative; border-radius: var(--radius-md); overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: var(--card-bg); z-index: 100; box-shadow: var(--card-glow);">
-              <img id="create-post-preview-img" style="width: 100%; display: block;" />
-              <video id="create-post-preview-video" style="width: 100%; display: none;" controls muted></video>
-              <button id="create-post-remove-btn" type="button" class="action-circle-btn"
-                style="position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); border: none; width: 24px; height: 24px;"><i
-                  data-lucide="x" style="width:14px; height:14px; color: white;"></i></button>
+            <div id="create-post-preview-container" style="display: none; position: relative; border-radius: var(--radius-md); overflow: hidden; border: 1px solid rgba(255,255,255,0.1); background: var(--card-bg); z-index: 100; box-shadow: var(--card-glow);">
+              <img id="create-post-preview-img" style="width: 100%; display: block;">
+              <video id="create-post-preview-video" style="width: 100%; display: none;" controls="" muted=""></video>
+              <button id="create-post-remove-btn" type="button" class="action-circle-btn" style="position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6); border: none; width: 24px; height: 24px;"><i data-lucide="x" style="width:14px; height:14px; color: white;"></i></button>
             </div>
 
-            <div
-              style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
               <div style="display: flex; gap: 8px;">
-                <button id="create-post-media-btn" type="button" class="action-circle-btn"
-                  style="width: 32px; height: 32px; background: rgba(108, 59, 255, 0.15); border: 1px solid var(--primary); color: var(--primary);"
-                  title="Add Media">
+                <button id="create-post-media-btn" type="button" class="action-circle-btn" style="width: 32px; height: 32px; background: rgba(108, 59, 255, 0.15); border: 1px solid var(--primary); color: var(--primary);" title="Add Media">
                   <i data-lucide="image" style="width: 14px; height: 14px;"></i>
                 </button>
-                <input type="file" id="create-post-file-input" style="display: none;" accept="image/*,video/*" />
+                <input type="file" id="create-post-file-input" style="display: none;" accept="image/*,video/*">
               </div>
 
-              <button id="create-post-submit-btn" type="button" class="welcome-btn btn-primary"
-                style="padding: 6px 18px; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); height: 32px; display: flex; align-items: center; gap: 6px;"
-                title="Post" disabled>
+              <button id="create-post-submit-btn" type="button" class="welcome-btn btn-primary" style="padding: 6px 18px; font-size: 13px; font-weight: 600; border-radius: var(--radius-md); height: 32px; display: flex; align-items: center; gap: 6px;" title="Post" disabled="">
                 <i data-lucide="send" style="width:14px; height:14px;"></i> Share
               </button>
             </div>
@@ -458,321 +434,7 @@
 
 
           <!-- FEED CONTAINER -->
-          <div class="feed-container" id="home-feed-posts">
-
-            <!-- POST CARD 1: ALEX RIVERS -->
-            <article class="feed-card" id="post-1" data-tags="all chill calm">
-              <div class="post-header">
-                <div class="post-author-info">
-                  <img
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80"
-                    alt="Alex Rivers" class="author-avatar" />
-                  <div>
-                    <h4 class="author-name">Alex Rivers
-                    </h4>
-                    <div class="post-meta">
-                      <span class="post-time">10:30 AM</span>
-                      <span class="dot-separator">•</span>
-                      <i data-lucide="globe" class="meta-icon"></i>
-                    </div>
-                  </div>
-                </div>
-                <button class="post-options-btn" id="post-opts-1"><i data-lucide="more-horizontal"></i></button>
-              </div>
-
-              <div class="post-caption">
-                The view from our team offsite was incredible! 🏔️✨ #trending #chill
-              </div>
-
-              <!-- Post Media with Overlaid Vertical Actions -->
-              <div class="post-media-container">
-                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"
-                  alt="Mountain Lake View" class="post-media-img" />
-
-                <!-- Click to double-tap action overlay -->
-                <div class="double-tap-heart"><i data-lucide="heart"></i></div>
-
-                <!-- TikTok / Vertical engagement overlay right aligned -->
-                <div class="post-engagement-actions">
-                  <div class="engagement-item like-btn-action" data-post-id="1">
-                    <button class="action-circle-btn heart-btn"><i data-lucide="heart"></i></button>
-                    <span class="action-count">12.4K</span>
-                  </div>
-                  <div class="engagement-item comment-btn-action" id="post-comment-btn-1">
-                    <button class="action-circle-btn"><i data-lucide="message-circle"></i></button>
-                    <span class="action-count">342</span>
-                  </div>
-                  <div class="engagement-item share-btn-action" id="post-share-btn-1">
-                    <button class="action-circle-btn"><i data-lucide="send"></i></button>
-                    <span class="action-count">1.2K</span>
-                  </div>
-                  <div class="engagement-item bookmark-btn-action" id="post-book-btn-1">
-                    <button class="action-circle-btn bookmark-btn"><i data-lucide="bookmark"></i></button>
-                    <span class="action-count">980</span>
-                  </div>
-                </div>
-              </div>
-              <div class="story-viewer-overlay feed-comments-modal">
-                <div class="comments-card glass-panel">
-                  <div class="modal-header">
-                    <h3>Comments</h3>
-                    <button class="modal-close-btn"><i data-lucide="x"></i></button>
-                  </div>
-                  <div class="comments-list"></div>
-                  <div class="comments-footer">
-                    <input type="text" placeholder="Add a comment..." />
-                    <button class="comment-send-btn"><i data-lucide="send"></i></button>
-                  </div>
-                </div>
-              </div>
-              <div class="story-viewer-overlay feed-share-modal">
-                <div class="share-card glass-panel">
-                  <div class="modal-header">
-                    <h3>Share to Hubbies</h3>
-                    <button class="modal-close-btn"><i data-lucide="x"></i></button>
-                  </div>
-                  <div class="share-friends-list"></div>
-                </div>
-              </div>
-            </article>
-
-            <!-- POST CARD 2: JAMIE SUN -->
-            <article class="feed-card" id="post-2" data-tags="all happy hype beats">
-              <div class="post-header">
-                <div class="post-author-info">
-                  <img
-                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80"
-                    alt="Jamie Sun" class="author-avatar" />
-                  <div>
-                    <h4 class="author-name">Jamie Sun</h4>
-                    <div class="post-meta">
-                      <span class="post-time">Yesterday at 8:45 PM</span>
-                      <span class="dot-separator">•</span>
-                      <i data-lucide="globe" class="meta-icon"></i>
-                    </div>
-                  </div>
-                </div>
-                <button class="post-options-btn" id="post-opts-2"><i data-lucide="more-horizontal"></i></button>
-              </div>
-
-              <div class="post-caption">
-                Live coding session with the team! Building the next spatial computing layout 🚀 #hype #happy
-              </div>
-
-              <!-- Coding Video Player with Engagement Overlay -->
-              <div class="post-media-container video-player-container">
-                <!-- Video element playing ocean/scenic or code look loop -->
-                <video src="https://vjs.zencdn.net/v/oceans.mp4" loop muted playsinline
-                  class="post-media-video"></video>
-
-                <div class="video-play-overlay">
-                  <button class="play-btn-big"><i data-lucide="play"></i></button>
-                </div>
-
-                <div class="double-tap-heart"><i data-lucide="heart"></i></div>
-
-                <!-- TikTok / Vertical engagement overlay right aligned -->
-                <div class="post-engagement-actions">
-                  <div class="engagement-item like-btn-action" data-post-id="2">
-                    <button class="action-circle-btn heart-btn"><i data-lucide="heart"></i></button>
-                    <span class="action-count">8.2K</span>
-                  </div>
-                  <div class="engagement-item comment-btn-action" id="post-comment-btn-2">
-                    <button class="action-circle-btn"><i data-lucide="message-circle"></i></button>
-                    <span class="action-count">268</span>
-                  </div>
-                  <div class="engagement-item share-btn-action" id="post-share-btn-2">
-                    <button class="action-circle-btn"><i data-lucide="send"></i></button>
-                    <span class="action-count">980</span>
-                  </div>
-                  <div class="engagement-item bookmark-btn-action" id="post-book-btn-2">
-                    <button class="action-circle-btn bookmark-btn"><i data-lucide="bookmark"></i></button>
-                    <span class="action-count">980</span>
-                  </div>
-                </div>
-              </div>
-              <div class="story-viewer-overlay feed-comments-modal">
-                <div class="comments-card glass-panel">
-                  <div class="modal-header">
-                    <h3>Comments</h3>
-                    <button class="modal-close-btn"><i data-lucide="x"></i></button>
-                  </div>
-                  <div class="comments-list"></div>
-                  <div class="comments-footer">
-                    <input type="text" placeholder="Add a comment..." />
-                    <button class="comment-send-btn"><i data-lucide="send"></i></button>
-                  </div>
-                </div>
-              </div>
-              <div class="story-viewer-overlay feed-share-modal">
-                <div class="share-card glass-panel">
-                  <div class="modal-header">
-                    <h3>Share to Hubbies</h3>
-                    <button class="modal-close-btn"><i data-lucide="x"></i></button>
-                  </div>
-                  <div class="share-friends-list"></div>
-                </div>
-              </div>
-            </article>
-
-            <!-- POST CARD 3: SARAH CHEN -->
-            <article class="feed-card" id="post-3" data-tags="all creative love hype">
-              <div class="post-header">
-                <div class="post-author-info">
-                  <img
-                    src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&h=150&q=80"
-                    alt="Sarah Chen" class="author-avatar" />
-                  <div>
-                    <h4 class="author-name">Sarah Chen
-                    </h4>
-                    <div class="post-meta">
-                      <span class="post-time">2 hours ago</span>
-                      <span class="dot-separator">•</span>
-                      <i data-lucide="globe" class="meta-icon"></i>
-                    </div>
-                  </div>
-                </div>
-                <button class="post-options-btn" id="post-opts-3"><i data-lucide="more-horizontal"></i></button>
-              </div>
-
-              <div class="post-caption">
-                Designing the new Apple VisionOS interface for Hi-HUBBLE! The glassmorphism layers feel so premium in
-                spatial space 🕶️✨ #creative #hype #love
-              </div>
-
-              <div class="post-media-container">
-                <img src="https://images.unsplash.com/photo-1600132806370-bf17e65e942f?auto=format&fit=crop&w=800&q=80"
-                  alt="VisionOS UI Design mockup" class="post-media-img" />
-
-                <div class="double-tap-heart"><i data-lucide="heart"></i></div>
-
-                <div class="post-engagement-actions">
-                  <div class="engagement-item like-btn-action" data-post-id="3">
-                    <button class="action-circle-btn heart-btn"><i data-lucide="heart"></i></button>
-                    <span class="action-count">14.2K</span>
-                  </div>
-                  <div class="engagement-item comment-btn-action" id="post-comment-btn-3">
-                    <button class="action-circle-btn"><i data-lucide="message-circle"></i></button>
-                    <span class="action-count">480</span>
-                  </div>
-                  <div class="engagement-item share-btn-action" id="post-share-btn-3">
-                    <button class="action-circle-btn"><i data-lucide="send"></i></button>
-                    <span class="action-count">2.1K</span>
-                  </div>
-                  <div class="engagement-item bookmark-btn-action" id="post-book-btn-3">
-                    <button class="action-circle-btn bookmark-btn"><i data-lucide="bookmark"></i></button>
-                    <span class="action-count">1.1K</span>
-                  </div>
-                </div>
-              </div>
-              <div class="story-viewer-overlay feed-comments-modal">
-                <div class="comments-card glass-panel">
-                  <div class="modal-header">
-                    <h3>Comments</h3>
-                    <button class="modal-close-btn"><i data-lucide="x"></i></button>
-                  </div>
-                  <div class="comments-list"></div>
-                  <div class="comments-footer">
-                    <input type="text" placeholder="Add a comment..." />
-                    <button class="comment-send-btn"><i data-lucide="send"></i></button>
-                  </div>
-                </div>
-              </div>
-              <div class="story-viewer-overlay feed-share-modal">
-                <div class="share-card glass-panel">
-                  <div class="modal-header">
-                    <h3>Share to Hubbies</h3>
-                    <button class="modal-close-btn"><i data-lucide="x"></i></button>
-                  </div>
-                  <div class="share-friends-list"></div>
-                </div>
-              </div>
-            </article>
-
-            <!-- POST CARD 4: MARCUS -->
-            <article class="feed-card" id="post-4" data-tags="all chill beats happy">
-              <div class="post-header">
-                <div class="post-author-info">
-                  <img
-                    src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80"
-                    alt="Marcus" class="author-avatar" />
-                  <div>
-                    <h4 class="author-name">Marcus</h4>
-                    <div class="post-meta">
-                      <span class="post-time">Yesterday at 1:15 PM</span>
-                      <span class="dot-separator">•</span>
-                      <i data-lucide="globe" class="meta-icon"></i>
-                    </div>
-                  </div>
-                </div>
-                <button class="post-options-btn" id="post-opts-4"><i data-lucide="more-horizontal"></i></button>
-              </div>
-
-              <div class="post-caption">
-                Sunday beats coding session in the garden. Coffee is hot and the prototype is fast! 🎵☕ #beats #chill
-                #happy
-              </div>
-
-              <div class="post-media-container">
-                <img src="https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=800&q=80"
-                  alt="Outdoor workspace beats setup" class="post-media-img" />
-
-                <div class="double-tap-heart"><i data-lucide="heart"></i></div>
-
-                <div class="post-engagement-actions">
-                  <div class="engagement-item like-btn-action" data-post-id="4">
-                    <button class="action-circle-btn heart-btn"><i data-lucide="heart"></i></button>
-                    <span class="action-count">5.6K</span>
-                  </div>
-                  <div class="engagement-item comment-btn-action" id="post-comment-btn-4">
-                    <button class="action-circle-btn"><i data-lucide="message-circle"></i></button>
-                    <span class="action-count">120</span>
-                  </div>
-                  <div class="engagement-item share-btn-action" id="post-share-btn-4">
-                    <button class="action-circle-btn"><i data-lucide="send"></i></button>
-                    <span class="action-count">340</span>
-                  </div>
-                  <div class="engagement-item bookmark-btn-action" id="post-book-btn-4">
-                    <button class="action-circle-btn bookmark-btn"><i data-lucide="bookmark"></i></button>
-                    <span class="action-count">280</span>
-                  </div>
-                </div>
-              </div>
-              <div class="story-viewer-overlay feed-comments-modal">
-                <div class="comments-card glass-panel">
-                  <div class="modal-header">
-                    <h3>Comments</h3>
-                    <button class="modal-close-btn"><i data-lucide="x"></i></button>
-                  </div>
-                  <div class="comments-list"></div>
-                  <div class="comments-footer">
-                    <input type="text" placeholder="Add a comment..." />
-                    <button class="comment-send-btn"><i data-lucide="send"></i></button>
-                  </div>
-                </div>
-              </div>
-              <div class="story-viewer-overlay feed-share-modal">
-                <div class="share-card glass-panel">
-                  <div class="modal-header">
-                    <h3>Share to Hubbies</h3>
-                    <button class="modal-close-btn"><i data-lucide="x"></i></button>
-                  </div>
-                  <div class="share-friends-list"></div>
-                </div>
-              </div>
-            </article>
-
-            <!-- Feed Empty State (Hidden) -->
-            <div id="feed-empty-state" class="glass-panel feed-card"
-              style="display:none; text-align:center; padding: 40px 20px;">
-              <i data-lucide="search-x"
-                style="width: 48px; height: 48px; color: var(--text-muted); margin: 0 auto 16px;"></i>
-              <h3>No hubs found matching your search</h3>
-              <p style="color: var(--text-muted); font-size:13px; margin-top:8px;">Try typing a different keyword or tag
-                like "#chill" or "lake"</p>
-            </div>
-
-          </div>
+          <div class="feed-container" id="home-feed-posts"><div style="text-align:center; padding: 40px; color: rgba(255,255,255,0.5);">No posts yet.</div></div>
         </div>
 
         <!-- ==================== VIEW: SEARCH ==================== -->
@@ -785,7 +447,7 @@
               </div>
               <div class="search-view-box">
                 <i data-lucide="search"></i>
-                <input type="search" id="search-view-input" placeholder="Search people, hubs, places..." />
+                <input type="search" id="search-view-input" placeholder="Search people, hubs, places...">
               </div>
             </div>
             <div class="search-grid">
@@ -818,9 +480,7 @@
                 <div class="search-person-list">
                   <div class="search-person-row">
                     <div class="person-info">
-                      <img
-                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&h=100&q=80"
-                        alt="Aria Brooks" />
+                      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&amp;fit=crop&amp;w=100&amp;h=100&amp;q=80" alt="Aria Brooks">
                       <div>
                         <strong>Aria Brooks</strong>
                         <span>@aria.brooks</span>
@@ -830,9 +490,7 @@
                   </div>
                   <div class="search-person-row">
                     <div class="person-info">
-                      <img
-                        src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&h=100&q=80"
-                        alt="Jonas Lee" />
+                      <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&amp;fit=crop&amp;w=100&amp;h=100&amp;q=80" alt="Jonas Lee">
                       <div>
                         <strong>Jonas Lee</strong>
                         <span>@jonas.lee</span>
@@ -842,9 +500,7 @@
                   </div>
                   <div class="search-person-row">
                     <div class="person-info">
-                      <img
-                        src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=100&h=100&q=80"
-                        alt="Maya Thompson" />
+                      <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&amp;fit=crop&amp;w=100&amp;h=100&amp;q=80" alt="Maya Thompson">
                       <div>
                         <strong>Maya Thompson</strong>
                         <span>@maya.t</span>
@@ -895,9 +551,7 @@
 
               <!-- Reel 1 -->
               <div class="reel-card">
-                <video
-                  src="https://www.w3schools.com/html/movie.mp4"
-                  loop muted playsinline class="reel-video"></video>
+                <video src="https://www.w3schools.com/html/movie.mp4" loop="" muted="" playsinline="" class="reel-video"></video>
                 <div class="reel-play-icon-overlay"><i data-lucide="play"></i></div>
 
                 <div class="double-tap-heart"><i data-lucide="heart"></i></div>
@@ -905,9 +559,7 @@
                 <div class="reel-overlay">
                   <div class="reel-left-info">
                     <div class="reel-user">
-                      <img
-                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100&q=80"
-                        alt="Jamie Sun" />
+                      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&amp;fit=crop&amp;w=100&amp;h=100&amp;q=80" alt="Jamie Sun">
                       <span>Jamie Sun • <strong class="reel-follow-btn">Follow</strong></span>
                     </div>
                     <p class="reel-caption">Coding the main float engine. HMR speed check! 💻🚀 #javascript #vite #code
@@ -947,7 +599,7 @@
                     </div>
                     <div class="comments-list"></div>
                     <div class="comments-footer">
-                      <input type="text" placeholder="Add a comment..." />
+                      <input type="text" placeholder="Add a comment...">
                       <button class="comment-send-btn"><i data-lucide="send"></i></button>
                     </div>
                   </div>
@@ -966,7 +618,7 @@
 
               <!-- Reel 2 -->
               <div class="reel-card">
-                <video src="https://vjs.zencdn.net/v/oceans.mp4" loop muted playsinline class="reel-video"></video>
+                <video src="https://vjs.zencdn.net/v/oceans.mp4" loop="" muted="" playsinline="" class="reel-video"></video>
                 <div class="reel-play-icon-overlay"><i data-lucide="play"></i></div>
 
                 <div class="double-tap-heart"><i data-lucide="heart"></i></div>
@@ -974,9 +626,7 @@
                 <div class="reel-overlay">
                   <div class="reel-left-info">
                     <div class="reel-user">
-                      <img
-                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80"
-                        alt="Alex Rivers" />
+                      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&amp;fit=crop&amp;w=150&amp;h=150&amp;q=80" alt="Alex Rivers">
                       <span>Alex Rivers • <strong class="reel-follow-btn">Follow</strong></span>
                     </div>
                     <p class="reel-caption">Offsite trip of a lifetime. Highly recommend the lake view 🏔️✨ #nature
@@ -1016,7 +666,7 @@
                     </div>
                     <div class="comments-list"></div>
                     <div class="comments-footer">
-                      <input type="text" placeholder="Add a comment..." />
+                      <input type="text" placeholder="Add a comment...">
                       <button class="comment-send-btn"><i data-lucide="send"></i></button>
                     </div>
                   </div>
@@ -1040,32 +690,28 @@
           <div class="explore-posts-panel" id="explore-posts-container">
             <div class="explore-grid">
               <div class="explore-item glass-panel" id="ex-item-1">
-                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80"
-                  alt="Explore Portrait" />
+                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&amp;fit=crop&amp;w=400&amp;q=80" alt="Explore Portrait">
                 <div class="explore-info">
                   <h4>Portrait Studies</h4>
                   <p><i data-lucide="heart"></i> 4.5K</p>
                 </div>
               </div>
               <div class="explore-item glass-panel" id="ex-item-2">
-                <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=400&q=80"
-                  alt="Tech setup" />
+                <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&amp;fit=crop&amp;w=400&amp;q=80" alt="Tech setup">
                 <div class="explore-info">
                   <h4>Hubs Tech Setup</h4>
                   <p><i data-lucide="heart"></i> 12.1K</p>
                 </div>
               </div>
               <div class="explore-item glass-panel" id="ex-item-3">
-                <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=400&q=80"
-                  alt="Creative Design" />
+                <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&amp;fit=crop&amp;w=400&amp;q=80" alt="Creative Design">
                 <div class="explore-info">
                   <h4>Abstract caustics</h4>
                   <p><i data-lucide="heart"></i> 8.9K</p>
                 </div>
               </div>
               <div class="explore-item glass-panel" id="ex-item-4">
-                <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=400&q=80"
-                  alt="Retro Gaming" />
+                <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&amp;fit=crop&amp;w=400&amp;q=80" alt="Retro Gaming">
                 <div class="explore-info">
                   <h4>Retro Synth Room</h4>
                   <p><i data-lucide="heart"></i> 7.3K</p>
@@ -1086,8 +732,7 @@
                   <h3>Chat Inbox</h3>
                   <div class="inbox-actions">
                     <div class="relative-container">
-                      <button class="icon-btn bg-purple-btn" id="new-chat-btn" title="New Chat"><i
-                          data-lucide="plus"></i></button>
+                      <button class="icon-btn bg-purple-btn" id="new-chat-btn" title="New Chat"><i data-lucide="plus"></i></button>
                       <!-- Dropdown simulated in UI -->
                       <div class="simulated-dropdown" id="new-chat-dropdown">
                         <button class="dropdown-item" id="dr-new-group"><i data-lucide="users"></i> New Group</button>
@@ -1108,7 +753,7 @@
 
                 <div class="inbox-search">
                   <i data-lucide="search"></i>
-                  <input type="text" placeholder="Search chats, people or groups..." id="inbox-search-input" />
+                  <input type="text" placeholder="Search chats, people or groups..." id="inbox-search-input">
                 </div>
 
                 <div class="inbox-category-tags">
@@ -1145,9 +790,7 @@
               <div class="chat-window-header" id="chat-window-header">
                 <div class="chat-active-user-info">
                   <button class="back-to-inbox-btn mobile-only"><i data-lucide="arrow-left"></i></button>
-                  <img
-                    src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&h=150&q=80"
-                    alt="Emma Johnson" class="chat-header-avatar" />
+                  <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&amp;fit=crop&amp;w=150&amp;h=150&amp;q=80" alt="Emma Johnson" class="chat-header-avatar">
                   <div>
                     <h4 class="chat-header-name">Emma Johnson</h4>
                     <span class="chat-header-status"><span class="dot-green"></span> Online</span>
@@ -1156,14 +799,10 @@
 
                 <!-- Top layout modes selector allowing the user to experience all sub-mockups -->
                 <div class="chat-top-modes-nav">
-                  <button class="mode-tab active" data-chat-mode="chat" title="Open Chat"><i
-                      data-lucide="message-square"></i><span>Chat</span></button>
-                  <button class="mode-tab" data-chat-mode="voice-call" title="Audio Call"><i
-                      data-lucide="phone"></i><span>Audio</span></button>
-                  <button class="mode-tab" data-chat-mode="call" title="Video Call"><i
-                      data-lucide="video"></i><span>Video</span></button>
-                  <button class="mode-tab" data-chat-mode="media" title="Shared Media"><i
-                      data-lucide="folder-open"></i><span>Media</span></button>
+                  <button class="mode-tab active" data-chat-mode="chat" title="Open Chat"><i data-lucide="message-square"></i><span>Chat</span></button>
+                  <button class="mode-tab" data-chat-mode="voice-call" title="Audio Call"><i data-lucide="phone"></i><span>Audio</span></button>
+                  <button class="mode-tab" data-chat-mode="call" title="Video Call"><i data-lucide="video"></i><span>Video</span></button>
+                  <button class="mode-tab" data-chat-mode="media" title="Shared Media"><i data-lucide="folder-open"></i><span>Media</span></button>
                 </div>
               </div>
 
@@ -1222,20 +861,20 @@
                     <!-- ACTIVE CALL SCREEN -->
                     <div id="video-call-active-screen" class="video-call-screen-layout" style="display: none;">
                       <div class="remote-video-frame" id="remote-video-container">
-                        <video id="video-call-remote-feed" class="remote-video-feed" autoplay playsinline></video>
+                        <video id="video-call-remote-feed" class="remote-video-feed" autoplay="" playsinline=""></video>
                         <div class="remote-name-tag" id="video-call-remote-name">Emma Johnson</div>
                         <div class="noise-cancellation-badge"><i data-lucide="mic"></i> AI Noise Cancellation On</div>
                       </div>
 
                       <div class="local-preview-frame" id="video-call-local-frame">
-                        <video id="video-call-local-feed" autoplay muted playsinline></video>
+                        <video id="video-call-local-feed" autoplay="" muted="" playsinline=""></video>
                         <div class="local-name-tag">You</div>
                       </div>
 
                       <!-- Audio Active Container -->
                       <div id="audio-call-active-container" style="display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px; width: 100%; height: 100%; min-height: 300px; margin: auto; padding: 20px;">
                         <div class="audio-avatar-wrapper" style="position: relative; display: inline-block;">
-                          <img id="audio-call-active-avatar" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&h=150&q=80" class="audio-active-avatar animate-pulse-ring" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary-color);" />
+                          <img id="audio-call-active-avatar" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&amp;fit=crop&amp;w=150&amp;h=150&amp;q=80" class="audio-active-avatar animate-pulse-ring" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary-color);">
                           <div class="audio-indicator-icon" style="position: absolute; bottom: 5px; right: 5px; background: var(--primary-color); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #1a1a24;"><i data-lucide="phone" style="width: 14px; height: 14px;"></i></div>
                         </div>
                         <h3 id="audio-call-active-name" style="font-family: 'Outfit'; font-size: 22px; font-weight: 700; color: white; margin: 0;">Emma Johnson</h3>
@@ -1255,7 +894,7 @@
                     <!-- OUTGOING CALL SCREEN -->
                     <div id="video-call-outgoing-screen" class="video-call-screen-layout" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; height: 100%;">
                       <div class="outgoing-avatar-container">
-                        <img id="video-call-outgoing-avatar" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&h=150&q=80" class="outgoing-avatar animate-pulse-ring" />
+                        <img id="video-call-outgoing-avatar" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&amp;fit=crop&amp;w=150&amp;h=150&amp;q=80" class="outgoing-avatar animate-pulse-ring">
                       </div>
                       <h3 id="video-call-outgoing-name" style="font-family: 'Outfit'; font-size: 20px; font-weight: 700; color: white;">Emma Johnson</h3>
                       <p id="video-call-outgoing-status" style="color: rgba(255,255,255,0.6); font-size: 14px; margin: 0;">Calling...</p>
@@ -1265,16 +904,11 @@
                     <div class="call-controls-panel" id="video-call-controls" style="display: none;">
                       <div class="call-timer" id="call-timer-display">00:00:00</div>
                       <div class="controls-row">
-                        <button class="control-btn" id="call-mute-btn" title="Mute Mic"><i
-                            data-lucide="mic"></i></button>
-                        <button class="control-btn" id="call-cam-btn" title="Toggle Camera"><i
-                            data-lucide="video"></i></button>
-                        <button class="control-btn" id="call-speaker-btn" title="Speaker Mode"><i
-                            data-lucide="volume-2"></i></button>
-                        <button class="control-btn" id="call-share-btn" title="Share Screen"><i
-                            data-lucide="screen-share"></i></button>
-                        <button class="control-btn end-call-btn" id="end-call-btn" title="End Call"><i
-                            data-lucide="phone-off"></i></button>
+                        <button class="control-btn" id="call-mute-btn" title="Mute Mic"><i data-lucide="mic"></i></button>
+                        <button class="control-btn" id="call-cam-btn" title="Toggle Camera"><i data-lucide="video"></i></button>
+                        <button class="control-btn" id="call-speaker-btn" title="Speaker Mode"><i data-lucide="volume-2"></i></button>
+                        <button class="control-btn" id="call-share-btn" title="Share Screen"><i data-lucide="screen-share"></i></button>
+                        <button class="control-btn end-call-btn" id="end-call-btn" title="End Call"><i data-lucide="phone-off"></i></button>
                       </div>
                     </div>
                   </div>
@@ -1295,7 +929,7 @@
                       </div>
                       <div class="media-search">
                         <i data-lucide="search"></i>
-                        <input type="text" placeholder="Search shared files..." id="media-search-input" />
+                        <input type="text" placeholder="Search shared files..." id="media-search-input">
                       </div>
                     </div>
 
@@ -1314,16 +948,11 @@
 
                 <!-- Bottom attachments action grid mimicking image 2 bottom tray -->
                 <div class="chat-attachment-grid" id="chat-attachments-drawer">
-                  <button class="attachment-action-btn" id="attachment-btn-picker"><i
-                      data-lucide="paperclip"></i><span>Attachment</span></button>
-                  <button class="attachment-action-btn" id="camera-click-sim"><i
-                      data-lucide="camera"></i><span>Camera</span></button>
+                  <button class="attachment-action-btn" id="attachment-btn-picker"><i data-lucide="paperclip"></i><span>Attachment</span></button>
+                  <button class="attachment-action-btn" id="camera-click-sim"><i data-lucide="camera"></i><span>Camera</span></button>
                   <button class="attachment-action-btn" id="mic-click-sim"><i data-lucide="mic"></i><span>Voice
                       Note</span></button>
-                  <button class="attachment-action-btn" id="loc-click-sim"><i
-                      data-lucide="map-pin"></i><span>Location</span></button>
-                  <button class="attachment-action-btn" id="files-btn-picker"><i
-                      data-lucide="folder"></i><span>Files</span></button>
+                  <button class="attachment-action-btn" id="loc-click-sim"><i data-lucide="map-pin"></i><span>Location</span></button>
                 </div>
 
                 <!-- Reply Preview Container -->
@@ -1335,10 +964,26 @@
                   <button class="reply-preview-close" id="reply-preview-close-btn"><i data-lucide="x"></i></button>
                 </div>
 
+                <!-- Voice Note Preview Container -->
+                <div class="chat-voice-preview" id="voice-note-preview-container" style="display: none;">
+                  <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1; min-width: 0;">
+                    <i data-lucide="mic" style="color: var(--pink); width: 18px; height: 18px; min-width: 18px;"></i>
+                    <span style="font-weight: 500; font-size: 13px; color: var(--pink); white-space: nowrap; margin-right: 4px;">Voice Preview:</span>
+                    <audio id="voice-note-preview-audio" controls="" style="flex-grow: 1; height: 32px; min-width: 150px; outline: none;"></audio>
+                  </div>
+                  <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                    <button class="glass-btn" id="voice-note-preview-delete" style="padding: 6px 12px; border-radius: var(--radius-sm); color: #ff4d4f; border-color: rgba(255,77,79,0.2); font-size: 12px; display: flex; align-items: center; gap: 4px; height: 32px; line-height: 1;">
+                      <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Discard
+                    </button>
+                    <button class="glass-btn bg-pink-btn" id="voice-note-preview-send" style="padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; display: flex; align-items: center; gap: 4px; height: 32px; line-height: 1;">
+                      <i data-lucide="send" style="width: 14px; height: 14px;"></i> Send
+                    </button>
+                  </div>
+                </div>
+
                 <!-- Input message field -->
                 <div class="chat-input-row">
-                  <button class="chat-action-toggle-btn" id="toggle-attachments-btn" title="Toggle Actions menu"><i
-                      data-lucide="plus"></i></button>
+                  <button class="chat-action-toggle-btn" id="toggle-attachments-btn" title="Toggle Actions menu"><i data-lucide="plus"></i></button>
                   <div class="chat-input-wrapper">
                     <!-- Emoji Picker Popover -->
                     <div class="emoji-picker-popover" id="chat-emoji-popover">
@@ -1353,8 +998,7 @@
                           <button class="emoji-category-btn" data-emoji-category="Travel">✈️</button>
                           <button class="emoji-category-btn" data-emoji-category="Objects">💡</button>
                         </div>
-                        <input class="emoji-picker-search" type="search" placeholder="Search"
-                          aria-label="Search emoji" />
+                        <input class="emoji-picker-search" type="search" placeholder="Search" aria-label="Search emoji">
                       </div>
                       <div class="emoji-picker-grid" id="emoji-picker-grid"></div>
                     </div>
@@ -1370,22 +1014,16 @@
                         <button class="ai-spelling-btn-cancel" id="ai-spelling-cancel-btn">Cancel</button>
                       </div>
                     </div>
-                    <input type="text" placeholder="Message..." id="chat-message-input" />
-                    <input type="file" id="chat-camera-file-input" style="display:none;" accept="image/*" />
-                    <input type="file" id="chat-gallery-file-input" style="display:none;"
-                      accept="image/*,video/*,audio/*,application/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" />
-                    <input type="file" id="attachment-file-input" style="display:none;" />
-                    <input type="file" id="attachment-doc-input" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" />
-                    <button class="chat-emoji-picker-btn" id="chat-smile-btn" title="Insert Emoji"><i
-                        data-lucide="smile"></i></button>
-                    <button class="chat-photo-picker-btn" id="chat-img-picker-btn" title="Open Camera"><i
-                        data-lucide="camera"></i></button>
-                    <button class="chat-photo-picker-btn" id="chat-gallery-picker-btn" title="Send Gallery Media"><i
-                        data-lucide="image"></i></button>
-                    <button class="chat-voice-picker-btn" id="chat-mic-input-btn" title="Voice Note"><i
-                        data-lucide="mic"></i></button>
-                    <button class="chat-ai-assistant-btn chat-photo-picker-btn" id="chat-ai-assistant-btn" title="AI Spelling Assistant"><i
-                        data-lucide="sparkles"></i></button>
+                    <input type="text" placeholder="Message..." id="chat-message-input">
+                    <input type="file" id="chat-camera-file-input" style="display:none;" accept="image/*">
+                    <input type="file" id="chat-gallery-file-input" style="display:none;" accept="image/*,video/*,audio/*,application/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
+                    <input type="file" id="attachment-file-input" style="display:none;">
+                    <input type="file" id="attachment-doc-input" style="display:none;" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
+                    <button class="chat-emoji-picker-btn" id="chat-smile-btn" title="Insert Emoji"><i data-lucide="smile"></i></button>
+                    <button class="chat-photo-picker-btn" id="chat-img-picker-btn" title="Open Camera"><i data-lucide="camera"></i></button>
+                    <button class="chat-photo-picker-btn" id="chat-gallery-picker-btn" title="Send Gallery Media"><i data-lucide="image"></i></button>
+                    <button class="chat-voice-picker-btn" id="chat-mic-input-btn" title="Voice Note"><i data-lucide="mic"></i></button>
+                    <button class="chat-ai-assistant-btn chat-photo-picker-btn" id="chat-ai-assistant-btn" title="AI Spelling Assistant"><i data-lucide="sparkles"></i></button>
                   </div>
                   <button class="chat-send-btn" id="chat-send-msg-btn"><i data-lucide="send"></i></button>
                 </div>
@@ -1407,12 +1045,10 @@
 
             <div class="profile-summary-card">
               <div class="profile-banner">
-                <img src="" alt="Profile banner" />
+                <img src="" alt="Profile banner">
               </div>
               <div class="profile-summary-top">
-                <img
-                  src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                  alt="Profile avatar" class="profile-screen-avatar" />
+                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Profile avatar" class="profile-screen-avatar">
                 <div style="flex-grow: 1; margin-left: 12px;">
                   <h3>&nbsp;</h3>
                   <p class="profile-screen-handle">&nbsp;</p>
@@ -1442,12 +1078,12 @@
                 Profile</button>
               <button class="profile-option-btn" data-action="vibe-settings"><i data-lucide="sliders"></i> HUBBS
                 Settings</button>
-              <button class="profile-option-btn" data-action="privacy"><i data-lucide="shield-check"></i> Privacy &
+              <button class="profile-option-btn" data-action="privacy"><i data-lucide="shield-check"></i> Privacy &amp;
                 Safety</button>
               <button class="profile-option-btn" data-action="notifications"><i data-lucide="bell"></i>
                 Notifications</button>
 
-              <button class="profile-option-btn" data-action="help"><i data-lucide="help-circle"></i> Help &
+              <button class="profile-option-btn" data-action="help"><i data-lucide="help-circle"></i> Help &amp;
                 Support</button>
               <button class="profile-option-btn" data-action="about"><i data-lucide="info"></i> About In Hubs</button>
             </div>
@@ -1517,16 +1153,11 @@
                 <p class="section-desc">Change the primary aesthetic color theme dynamically.</p>
 
                 <div class="theme-picker-row">
-                  <button class="color-picker-dot active" data-color="#6C3BFF" style="background-color: #6C3BFF;"
-                    title="Default Purple"></button>
-                  <button class="color-picker-dot" data-color="#007AFF" style="background-color: #007AFF;"
-                    title="Ocean Blue"></button>
-                  <button class="color-picker-dot" data-color="#39FF14" style="background-color: #39FF14;"
-                    title="Neon Green"></button>
-                  <button class="color-picker-dot" data-color="#FF4FA3" style="background-color: #FF4FA3;"
-                    title="Hot Pink"></button>
-                  <button class="color-picker-dot" data-color="#FF9500" style="background-color: #FF9500;"
-                    title="Solar Orange"></button>
+                  <button class="color-picker-dot active" data-color="#6C3BFF" style="background-color: #6C3BFF;" title="Default Purple"></button>
+                  <button class="color-picker-dot" data-color="#007AFF" style="background-color: #007AFF;" title="Ocean Blue"></button>
+                  <button class="color-picker-dot" data-color="#39FF14" style="background-color: #39FF14;" title="Neon Green"></button>
+                  <button class="color-picker-dot" data-color="#FF4FA3" style="background-color: #FF4FA3;" title="Hot Pink"></button>
+                  <button class="color-picker-dot" data-color="#FF9500" style="background-color: #FF9500;" title="Solar Orange"></button>
                 </div>
 
                 <div class="setting-toggle-item">
@@ -1535,7 +1166,7 @@
                     <p>Enable premium dynamic reflections</p>
                   </div>
                   <label class="switch-toggle">
-                    <input type="checkbox" id="toggle-caustics-checkbox" checked />
+                    <input type="checkbox" id="toggle-caustics-checkbox" checked="">
                     <span class="switch-slider"></span>
                   </label>
                 </div>
@@ -1543,7 +1174,7 @@
 
               <!-- Toggles Section -->
               <div class="dashboard-section-card">
-                <h4><i data-lucide="shield-check"></i> Privacy & Account</h4>
+                <h4><i data-lucide="shield-check"></i> Privacy &amp; Account</h4>
 
                 <div class="setting-toggle-item">
                   <div>
@@ -1551,7 +1182,7 @@
                     <p>Only approved hubbers can see your content</p>
                   </div>
                   <label class="switch-toggle">
-                    <input type="checkbox" id="toggle-privacy-checkbox" />
+                    <input type="checkbox" id="toggle-privacy-checkbox">
                     <span class="switch-slider"></span>
                   </label>
                 </div>
@@ -1562,7 +1193,7 @@
                     <p>Receive real-time sound updates</p>
                   </div>
                   <label class="switch-toggle">
-                    <input type="checkbox" id="toggle-notif-checkbox" checked />
+                    <input type="checkbox" id="toggle-notif-checkbox" checked="">
                     <span class="switch-slider"></span>
                   </label>
                 </div>
@@ -1584,29 +1215,8 @@
             <h4>Suggested Hubbers</h4>
             <button class="see-all-btn" id="sug-see-all-btn">See All</button>
           </div>
-          <div class="suggested-users-list">
-            <div class="user-row">
-              <img
-                src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=100&h=100&q=80"
-                alt="Zoe Lin" class="user-row-avatar" />
-              <div class="user-row-info">
-                <h5>Zoe Lin</h5>
-                <p>Suggested by AI</p>
-              </div>
-              <button class="follow-row-btn" id="follow-sug-1">Follow</button>
-            </div>
-            <div class="user-row">
-              <img
-                src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&h=100&q=80"
-                alt="Marcus" class="user-row-avatar" />
-              <div class="user-row-info">
-                <h5>Marcus</h5>
-                <p>Followed by Jamie</p>
-              </div>
-              <button class="follow-row-btn followed" id="follow-sug-2">Hubbies</button>
-            </div>
-          </div>
-        </div>
+          
+        <div style="padding: 20px; text-align: center; color: rgba(255, 255, 255, 0.5);">No suggestions available.</div></div>
 
         <!-- Trending Content Card -->
         <div class="sidebar-card trending-card glass-panel">
@@ -1614,24 +1224,8 @@
             <h4>Trending Hubbs</h4>
             <i data-lucide="trending-up" class="trending-icon"></i>
           </div>
-          <div class="trending-list">
-            <div class="trend-item" data-trend-word="VisionOSPrototype">
-              <span class="trend-category">Tech • Trending</span>
-              <h5>#VisionOSPrototype</h5>
-              <span class="trend-count">124.5K hubbers</span>
-            </div>
-            <div class="trend-item" data-trend-word="Glassmorphism">
-              <span class="trend-category">Aesthetics • Hot</span>
-              <h5>#Glassmorphism</h5>
-              <span class="trend-count">98.2K hubbers</span>
-            </div>
-            <div class="trend-item" data-trend-word="ViteVanillaJS">
-              <span class="trend-category">Code • Trending</span>
-              <h5>#ViteVanillaJS</h5>
-              <span class="trend-count">45.1K hubbers</span>
-            </div>
-          </div>
-        </div>
+          
+        <div style="padding: 20px; text-align: center; color: rgba(255, 255, 255, 0.5);">No trending hubbs.</div></div>
 
         <!-- Recent Activity / Active Friends -->
         <div class="sidebar-card activity-card glass-panel">
@@ -1714,7 +1308,7 @@
       <button class="main-glow-bubble" id="main-navigation-bubble" title="Drag to Move! Click to Open Menu!">
         <div class="bubble-orb-glowing">
           <div class="orb-logo-icon">
-            <img src="/hihubble-mascot-circle.png" alt="Hi-Hubble" />
+            <img src="/hihubble-mascot-circle.png" alt="Hi-Hubble">
           </div>
         </div>
         <div class="ambient-glow"></div>
@@ -1739,25 +1333,28 @@
       <!-- Story Header -->
       <div class="story-viewer-header">
         <div class="story-viewer-user">
-          <img src="" id="story-viewer-avatar" alt="Avatar" />
+          <img src="" id="story-viewer-avatar" alt="Avatar">
           <div>
             <h4 id="story-viewer-name">Alex Rivers</h4>
             <span id="story-viewer-time">2 hours ago</span>
           </div>
         </div>
-        <button class="story-viewer-close-btn" id="story-viewer-close"><i data-lucide="x"></i></button>
+        <div style="display: flex; gap: 8px;">
+          <button class="story-viewer-close-btn" id="story-viewer-delete" style="display: none; background: rgba(255,0,0,0.5);"><i data-lucide="trash-2"></i></button>
+          <button class="story-viewer-close-btn" id="story-viewer-close"><i data-lucide="x"></i></button>
+        </div>
       </div>
 
       <!-- Story Content -->
       <div class="story-viewer-content" id="story-viewer-content-box">
-        <img src="" id="story-viewer-img" alt="Hubs content" />
+        <img src="" id="story-viewer-img" alt="Hubs content">
         <div class="story-nav-btn prev" id="story-prev-btn"><i data-lucide="chevron-left"></i></div>
         <div class="story-nav-btn next" id="story-next-btn"><i data-lucide="chevron-right"></i></div>
       </div>
 
       <!-- Story Footer Reply Input -->
       <div class="story-viewer-footer">
-        <input type="text" placeholder="Send a reply..." id="story-reply-input" />
+        <input type="text" placeholder="Send a reply..." id="story-reply-input">
         <button class="story-like-btn" id="story-like-btn" title="Like this Hub">
           <i data-lucide="heart"></i>
           <span class="story-like-count" id="story-like-count">0</span>
@@ -1769,6 +1366,32 @@
   </div>
 
   <!-- ==================== PREMIUM EDIT PROFILE MODAL ==================== -->
+  <!-- ==================== STORY CREATION MODAL ==================== -->
+  <div id="story-creation-modal" class="story-viewer-overlay">
+    <div class="story-viewer-card glass-panel" style="width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; background: rgba(15, 15, 20, 0.95);">
+      <h3 style="color: white; margin: 0; text-align: center; font-size: 24px; padding-bottom: 8px;">Create Story</h3>
+      <img src="" id="story-creation-preview" style="flex: 1; width: 100%; border-radius: 16px; object-fit: contain; background: black; min-height: 0;">
+      <div style="display: flex; gap: 16px; justify-content: center; padding-top: 12px;">
+        <button id="story-creation-cancel" class="btn btn-secondary" style="padding: 12px 24px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; font-weight: 600;">Cancel</button>
+        <button id="story-creation-draft" class="btn btn-secondary" style="padding: 12px 24px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; font-weight: 600;">Save as Draft</button>
+        <button id="story-creation-publish" class="btn btn-primary" style="padding: 12px 32px; border-radius: 30px; background: var(--primary-gradient); color: white; border: none; font-weight: 600;">Publish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== STORY DRAFTS MODAL ==================== -->
+  <div id="story-drafts-modal" class="story-viewer-overlay">
+    <div class="story-viewer-card glass-panel" style="padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 80vh;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="color: white; margin: 0;">Story Drafts</h3>
+        <button id="story-drafts-close" class="btn-icon" style="background: transparent; border: none; color: white;"><i data-lucide="x"></i></button>
+      </div>
+      <div id="story-drafts-list" style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto;">
+        <!-- Drafts populated dynamically -->
+      </div>
+    </div>
+  </div>
+
   <div id="edit-profile-modal" class="story-viewer-overlay">
     <div class="edit-profile-card glass-panel">
       <div class="edit-profile-header">
@@ -1781,12 +1404,10 @@
         <div class="edit-field-group">
           <label>Profile Banner</label>
           <div class="banner-edit-preview-box">
-            <img id="edit-profile-banner-preview"
-              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-              alt="Banner Preview" />
+            <img id="edit-profile-banner-preview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Banner Preview">
             <button class="upload-badge-btn" id="upload-banner-trigger-btn"><i data-lucide="camera"></i> Change
               Banner</button>
-            <input type="file" id="edit-profile-banner-file" style="display:none;" accept="image/*" />
+            <input type="file" id="edit-profile-banner-file" style="display:none;" accept="image/*">
           </div>
         </div>
 
@@ -1794,24 +1415,22 @@
         <div class="edit-field-group avatar-edit-group">
           <label>Profile Avatar</label>
           <div class="avatar-edit-preview-box">
-            <img id="edit-profile-avatar-preview"
-              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-              alt="Avatar Preview" />
+            <img id="edit-profile-avatar-preview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Avatar Preview">
             <button class="upload-badge-btn" id="upload-avatar-trigger-btn"><i data-lucide="camera"></i></button>
-            <input type="file" id="edit-profile-avatar-file" style="display:none;" accept="image/*" />
+            <input type="file" id="edit-profile-avatar-file" style="display:none;" accept="image/*">
           </div>
         </div>
 
         <!-- Name Input -->
         <div class="edit-field-group">
           <label for="edit-profile-name-input">Display Name</label>
-          <input type="text" id="edit-profile-name-input" placeholder="Enter your name..." />
+          <input type="text" id="edit-profile-name-input" placeholder="Enter your name...">
         </div>
 
         <!-- Handle Input -->
         <div class="edit-field-group">
           <label for="edit-profile-handle-input">Username / Handle</label>
-          <input type="text" id="edit-profile-handle-input" placeholder="Enter your username..." />
+          <input type="text" id="edit-profile-handle-input" placeholder="Enter your username...">
         </div>
 
         <!-- Bio Input -->
@@ -1823,7 +1442,7 @@
         <!-- Phone Number Input -->
         <div class="edit-field-group">
           <label for="edit-profile-phone-input">Phone Number (SMS 2FA)</label>
-          <input type="text" id="edit-profile-phone-input" placeholder="e.g. +91 93477 12945" />
+          <input type="text" id="edit-profile-phone-input" placeholder="e.g. +91 93477 12945">
         </div>
 
         <!-- Preferred 2FA Method Selector -->
@@ -1847,7 +1466,7 @@
   <div id="privacy-settings-modal" class="story-viewer-overlay">
     <div class="edit-profile-card glass-panel" style="max-width: 500px;">
       <div class="edit-profile-header">
-        <h3><i data-lucide="shield-check"></i> Privacy & Safety</h3>
+        <h3><i data-lucide="shield-check"></i> Privacy &amp; Safety</h3>
         <button class="close-modal-btn" id="privacy-modal-close-btn"><i data-lucide="x"></i></button>
       </div>
 
@@ -1859,7 +1478,7 @@
             <p style="margin: 4px 0 0 0; font-size: 0.8rem; opacity: 0.7;">Secure your messages and media with E2EE</p>
           </div>
           <label class="switch-toggle">
-            <input type="checkbox" id="privacy-e2ee-toggle" />
+            <input type="checkbox" id="privacy-e2ee-toggle">
             <span class="switch-slider"></span>
           </label>
         </div>
@@ -1896,7 +1515,7 @@
             <p style="margin: 2px 0 0 0; font-size: 0.75rem; opacity: 0.7;">Receive real-time alerts on your device</p>
           </div>
           <label class="switch-toggle">
-            <input type="checkbox" id="notif-push-toggle" checked />
+            <input type="checkbox" id="notif-push-toggle" checked="">
             <span class="switch-slider"></span>
           </label>
         </div>
@@ -1907,7 +1526,7 @@
             <p style="margin: 2px 0 0 0; font-size: 0.75rem; opacity: 0.7;">Weekly summary of popular activities</p>
           </div>
           <label class="switch-toggle">
-            <input type="checkbox" id="notif-email-toggle" />
+            <input type="checkbox" id="notif-email-toggle">
             <span class="switch-slider"></span>
           </label>
         </div>
@@ -1918,7 +1537,7 @@
             <p style="margin: 2px 0 0 0; font-size: 0.75rem; opacity: 0.7;">Play sounds for incoming chats</p>
           </div>
           <label class="switch-toggle">
-            <input type="checkbox" id="notif-sound-toggle" checked />
+            <input type="checkbox" id="notif-sound-toggle" checked="">
             <span class="switch-slider"></span>
           </label>
         </div>
@@ -1935,14 +1554,14 @@
   <div id="help-support-modal" class="story-viewer-overlay">
     <div class="edit-profile-card glass-panel" style="max-width: 500px;">
       <div class="edit-profile-header">
-        <h3><i data-lucide="help-circle"></i> Help & Support</h3>
+        <h3><i data-lucide="help-circle"></i> Help &amp; Support</h3>
         <button class="close-modal-btn" id="help-modal-close-btn"><i data-lucide="x"></i></button>
       </div>
 
       <div class="edit-profile-body" style="display: flex; flex-direction: column; gap: 15px;">
         <div class="edit-field-group">
           <label for="help-search-input">Search Help Topics</label>
-          <input type="text" id="help-search-input" placeholder="How do I lock my profile..." />
+          <input type="text" id="help-search-input" placeholder="How do I lock my profile...">
         </div>
         <div class="edit-field-group">
           <label for="help-message-input">Message Support Desk</label>
@@ -1975,7 +1594,7 @@
           A premium social hub connecting creators, thinkers, and builders globally. Experience next-gen privacy, dynamic reels, and interactive hubs.
         </p>
         <p style="margin: 15px 0 0 0; font-size: 0.75rem; opacity: 0.5;">
-          &copy; 2026 HI-HUBBLE Inc. All rights reserved.
+          © 2026 HI-HUBBLE Inc. All rights reserved.
         </p>
       </div>
 
@@ -2010,12 +1629,11 @@
       </button>
     </div>
 
-  </div>
+  
 
   <!-- ==================== PREMIUM RELATIONS LIST MODAL (Followers/Following) ==================== -->
   <div id="relations-list-modal" class="story-viewer-overlay">
-    <div class="edit-profile-card glass-panel"
-      style="max-width: 420px; height: 500px; display: flex; flex-direction: column;">
+    <div class="edit-profile-card glass-panel" style="max-width: 420px; height: 500px; display: flex; flex-direction: column;">
       <div class="edit-profile-header">
         <h3 id="relations-list-title">HUBBERS</h3>
         <button class="close-modal-btn" id="relations-list-close-btn"><i data-lucide="x"></i></button>
@@ -2041,14 +1659,12 @@
 
   <!-- ==================== SUGGESTED VIBERS MODAL ==================== -->
   <div id="suggested-vibers-modal" class="story-viewer-overlay">
-    <div class="edit-profile-card glass-panel"
-      style="max-width: 420px; height: 500px; display: flex; flex-direction: column;">
+    <div class="edit-profile-card glass-panel" style="max-width: 420px; height: 500px; display: flex; flex-direction: column;">
       <div class="edit-profile-header">
         <h3>Suggested Hubbers</h3>
         <button class="close-modal-btn" id="suggested-vibers-close-btn"><i data-lucide="x"></i></button>
       </div>
-      <div class="edit-profile-body" style="flex-grow: 1; overflow-y: auto; padding: 12px;"
-        id="suggested-vibers-content">
+      <div class="edit-profile-body" style="flex-grow: 1; overflow-y: auto; padding: 12px;" id="suggested-vibers-content">
         <!-- Dynamically populated rows will go here -->
       </div>
     </div>
@@ -2063,7 +1679,7 @@
       </div>
       <div class="comments-list"></div>
       <div class="comments-footer">
-        <input type="text" placeholder="Add a comment..." />
+        <input type="text" placeholder="Add a comment...">
         <button class="comment-send-btn"><i data-lucide="send"></i></button>
       </div>
     </div>
@@ -2084,16 +1700,14 @@
   <div id="camera-capture-modal" class="story-viewer-overlay">
     <div class="camera-modal-container glass-panel">
       <div class="modal-header">
-        <h3><i data-lucide="camera"
-            style="display:inline-block; vertical-align:middle; margin-right:6px; width: 18px; height: 18px;"></i>Spatial
+        <h3><i data-lucide="camera" style="display:inline-block; vertical-align:middle; margin-right:6px; width: 18px; height: 18px;"></i>Spatial
           Camera</h3>
         <button class="modal-close-btn" id="camera-modal-close-btn"><i data-lucide="x"></i></button>
       </div>
       <div class="camera-viewport-container">
-        <video id="camera-video" autoplay playsinline></video>
+        <video id="camera-video" autoplay="" playsinline=""></video>
         <canvas id="camera-canvas" style="display:none;"></canvas>
-        <img id="camera-preview-img"
-          style="display:none; width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-md);" />
+        <img id="camera-preview-img" style="display:none; width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-md);">
         <div class="camera-fallback" id="camera-fallback-view">
           <i data-lucide="video-off"></i>
           <p>Camera feed not available</p>
@@ -2106,12 +1720,8 @@
           <span class="capture-inner-circle"></span>
         </button>
         <div id="camera-preview-controls" style="display:none; gap: 16px; justify-content: center; width: 100%;">
-          <button class="glass-btn" id="camera-retake-btn"
-            style="padding: 10px 24px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px;"><i
-              data-lucide="rotate-ccw"></i> Retake</button>
-          <button class="glass-btn bg-pink-btn" id="camera-send-btn"
-            style="padding: 10px 24px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px;"><i
-              data-lucide="send"></i> Send</button>
+          <button class="glass-btn" id="camera-retake-btn" style="padding: 10px 24px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px;"><i data-lucide="rotate-ccw"></i> Retake</button>
+          <button class="glass-btn bg-pink-btn" id="camera-send-btn" style="padding: 10px 24px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 8px;"><i data-lucide="send"></i> Send</button>
         </div>
       </div>
     </div>
@@ -2124,20 +1734,16 @@
         <h3 id="media-viewer-title">Shared Media</h3>
         <button class="modal-close-btn" id="media-viewer-close-btn"><i data-lucide="x"></i></button>
       </div>
-      <div class="media-viewer-viewport"
-        style="display: flex; justify-content: center; align-items: center; min-height: 300px; max-height: 400px; overflow: hidden; background: rgba(0,0,0,0.3); border-radius: var(--radius-md); padding: 16px;">
+      <div class="media-viewer-viewport" style="display: flex; justify-content: center; align-items: center; min-height: 300px; max-height: 400px; overflow: hidden; background: rgba(0,0,0,0.3); border-radius: var(--radius-md); padding: 16px;">
         <!-- Decrypted media renders dynamically here -->
       </div>
-      <div class="media-viewer-info"
-        style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between;">
+      <div class="media-viewer-info" style="padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between;">
         <span id="media-viewer-name">file_name.jpg</span>
         <span id="media-viewer-size">0.0 MB</span>
       </div>
       <div class="media-viewer-reply-box" style="padding-top: 12px; display: flex; gap: 12px; align-items: center;">
-        <input type="text" id="media-viewer-reply-input" placeholder="Type a reply..."
-          style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 10px; color: var(--text-color); font-size: 14px;" />
-        <button class="glass-btn bg-pink-btn" id="media-viewer-reply-send"
-          style="padding: 10px 20px; border-radius: var(--radius-md);"><i data-lucide="send"></i></button>
+        <input type="text" id="media-viewer-reply-input" placeholder="Type a reply..." style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 10px; color: var(--text-color); font-size: 14px;">
+        <button class="glass-btn bg-pink-btn" id="media-viewer-reply-send" style="padding: 10px 20px; border-radius: var(--radius-md);"><i data-lucide="send"></i></button>
       </div>
     </div>
   </div>
@@ -2146,7 +1752,7 @@
   <div id="incoming-call-modal" class="incoming-call-modal" style="display: none;">
     <div class="incoming-call-card glass-panel">
       <div class="caller-avatar-container">
-        <img id="incoming-call-avatar" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&h=150&q=80" alt="Caller Avatar" class="caller-avatar animate-pulse-ring" />
+        <img id="incoming-call-avatar" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&amp;fit=crop&amp;w=150&amp;h=150&amp;q=80" alt="Caller Avatar" class="caller-avatar animate-pulse-ring">
       </div>
       <h3 id="incoming-call-title">Incoming Video Call</h3>
       <p id="incoming-call-name">Emma Johnson is calling you...</p>
@@ -2173,7 +1779,7 @@
       </div>
       <div style="display: flex; justify-content: flex-end; gap: 10px;">
         <button id="forward-cancel-btn" style="padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.1); border: none; color: #fff; cursor: pointer; font-size: 0.9rem;">Cancel</button>
-        <button id="forward-send-btn" class="btn-primary" style="padding: 8px 20px; font-size: 0.9rem;" disabled>Forward</button>
+        <button id="forward-send-btn" class="btn-primary" style="padding: 8px 20px; font-size: 0.9rem;" disabled="">Forward</button>
       </div>
     </div>
   </div>
@@ -2195,6 +1801,6 @@
     </div>
   </div>
 
-</body>
 
-</html>
+
+</body></html>

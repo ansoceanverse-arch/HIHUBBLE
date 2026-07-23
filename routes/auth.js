@@ -2,92 +2,49 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../supabase.js';
-import { otps, sendOTPEmailHelper, sendOTPSMSHelper, JWT_SECRET } from '../utils.js';
+import { otps, sendOTPEmailHelper } from '../utils.js';
 
 const router = express.Router();
 
-router.post('/api/send-otp', async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email is required' });
+// Secret from .env for signing JWTs (must match Supabase JWT secret to work with RLS)
+const JWT_SECRET = process.env.SUPABASE_JWT_SECRET || 'super-secret-jwt-token-replace-me';
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  otps.set(email.toLowerCase(), {
-    otp,
-    expiresAt: Date.now() + 5 * 60 * 1000,
-    type: 'generic'
-  });
-
-  const mailResult = await sendOTPEmailHelper(email, otp);
-  if (mailResult.success) {
-    res.json({ success: true, message: 'OTP sent successfully' });
-  } else {
-    res.status(500).json({ 
-      error: 'Failed to send OTP email via SMTP', 
-      details: mailResult.details,
-      devFallbackOtp: mailResult.devFallbackOtp
-    });
-  }
-});
-
-router.post('/api/verify-otp', (req, res) => {
-  const { email, otp } = req.body;
-  if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required' });
-
-  const record = otps.get(email.toLowerCase());
-  if (!record) return res.status(400).json({ error: 'No OTP generated for this email' });
-  if (Date.now() > record.expiresAt) {
-    otps.delete(email.toLowerCase());
-    return res.status(400).json({ error: 'OTP has expired' });
-  }
-  if (record.otp !== otp) return res.status(400).json({ error: 'Invalid verification code' });
-
-  otps.delete(email.toLowerCase());
-  res.json({ success: true, message: 'OTP verified successfully' });
-});
-
+// ==========================================
+// 1. SIGNUP: Generate OTP and send email
+// ==========================================
 router.post('/api/auth/signup-otp', async (req, res) => {
-  const { fullName, email, username, password, dob, age, phoneNumber, preferred2faMethod } = req.body;
-  if (!fullName || !email || !username || !password || !dob || !age) {
+  const { fullName, email, username, password, dob } = req.body;
+  if (!fullName || !email || !username || !password || !dob) {
     return res.status(400).json({ error: 'All signup fields are required.' });
   }
 
-  const method = preferred2faMethod || 'email';
-  if (method === 'sms' && !phoneNumber) {
-    return res.status(400).json({ error: 'Phone number is required for SMS 2FA.' });
-  }
-
   try {
-    const { data: emailExists } = await supabase.from('users').select('*').eq('email', email.toLowerCase()).single();
+    // Pre-check email and username availability
+    const { data: emailExists } = await supabase.from('profiles').select('id').eq('email', email.toLowerCase()).maybeSingle();
     if (emailExists) return res.status(400).json({ error: 'Email already registered.' });
 
-    const { data: usernameExists } = await supabase.from('users').select('*').eq('username', username.toLowerCase()).single();
+    const { data: usernameExists } = await supabase.from('profiles').select('id').eq('username', username.toLowerCase()).maybeSingle();
     if (usernameExists) return res.status(400).json({ error: 'Username already registered.' });
 
+    // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     otps.set(email.toLowerCase(), {
       otp,
       expiresAt: Date.now() + 5 * 60 * 1000,
       type: 'signup',
-      payload: { fullName, email, username, password, dob, age, phoneNumber: phoneNumber || '', preferred2faMethod: method }
+      payload: { fullName, email, username, password, dob }
     });
 
-    let result;
-    if (method === 'sms') {
-      result = await sendOTPSMSHelper(phoneNumber, otp);
-    } else {
-      result = await sendOTPEmailHelper(email, otp);
-    }
+    // Send via standard Nodemailer (Bypassing Supabase limits)
+    const result = await sendOTPEmailHelper(email, otp);
 
     if (result.success) {
-      res.json({ success: true, message: 'OTP sent successfully.', email, phoneNumber: phoneNumber || '', preferred2faMethod: method });
+      res.json({ success: true, message: 'OTP sent successfully.' });
     } else {
       res.status(500).json({
-        error: `Failed to send OTP via ${method.toUpperCase()}`,
+        error: `Failed to send OTP via Email`,
         details: result.details,
-        devFallbackOtp: result.devFallbackOtp,
-        email,
-        phoneNumber: phoneNumber || '',
-        preferred2faMethod: method
+        devFallbackOtp: result.devFallbackOtp
       });
     }
   } catch (err) {
@@ -95,57 +52,44 @@ router.post('/api/auth/signup-otp', async (req, res) => {
   }
 });
 
+// ==========================================
+// 2. LOGIN: Verify password and send OTP
+// ==========================================
 router.post('/api/auth/login-otp', async (req, res) => {
-  const { username, password, deliveryMethod } = req.body;
+  const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Username and password are required.' });
 
   try {
-    const { data: user } = await supabase.from('users').select('*').eq('username', username.toLowerCase()).single();
-    if (!user) return res.status(404).json({ error: 'Username not found. Please sign up.' });
+    // Find user by username or email
+    const { data: user } = await supabase.from('profiles')
+      .select('*')
+      .or(`username.eq.${username.toLowerCase()},email.eq.${username.toLowerCase()}`)
+      .maybeSingle();
 
-    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!user) return res.status(404).json({ error: 'Account not found.' });
+
+    // Verify password
+    if (!user.password_hash) return res.status(400).json({ error: 'Password not set. Try resetting.' });
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) return res.status(400).json({ error: 'Invalid password. Please try again.' });
-
-    const preferredMethod = user.preferred2faMethod || 'email';
-    const method = deliveryMethod || preferredMethod;
-
-    if (method === 'sms' && !user.phoneNumber) {
-      return res.status(400).json({ error: 'No phone number is registered for this account. Please use Email verification.' });
-    }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     otps.set(user.email.toLowerCase(), {
       otp,
       expiresAt: Date.now() + 5 * 60 * 1000,
       type: 'login',
-      payload: { userId: user._id, email: user.email }
+      payload: { userId: user.id, email: user.email }
     });
 
-    let result;
-    if (method === 'sms') {
-      result = await sendOTPSMSHelper(user.phoneNumber, otp);
-    } else {
-      result = await sendOTPEmailHelper(user.email, otp);
-    }
+    const result = await sendOTPEmailHelper(user.email, otp);
 
     if (result.success) {
-      res.json({
-        success: true,
-        message: 'OTP sent successfully.',
-        email: user.email,
-        phoneNumber: user.phoneNumber || '',
-        preferred2faMethod: preferredMethod,
-        activeDeliveryMethod: method
-      });
+      res.json({ success: true, message: 'OTP sent successfully.', email: user.email });
     } else {
       res.status(500).json({
-        error: `Failed to send OTP via ${method.toUpperCase()}`,
+        error: `Failed to send OTP via Email`,
         details: result.details,
-        devFallbackOtp: result.devFallbackOtp,
-        email: user.email,
-        phoneNumber: user.phoneNumber || '',
-        preferred2faMethod: preferredMethod,
-        activeDeliveryMethod: method
+        devFallbackOtp: result.devFallbackOtp
       });
     }
   } catch (err) {
@@ -153,61 +97,9 @@ router.post('/api/auth/login-otp', async (req, res) => {
   }
 });
 
-router.post('/api/auth/forgot-otp', async (req, res) => {
-  const { username, newPassword, deliveryMethod } = req.body;
-  if (!username || !newPassword) return res.status(400).json({ error: 'Username and new password are required.' });
-
-  try {
-    const { data: user } = await supabase.from('users').select('*').eq('username', username.toLowerCase()).single();
-    if (!user) return res.status(404).json({ error: 'Username not found.' });
-
-    const preferredMethod = user.preferred2faMethod || 'email';
-    const method = deliveryMethod || preferredMethod;
-
-    if (method === 'sms' && !user.phoneNumber) {
-      return res.status(400).json({ error: 'No phone number is registered for this account. Please use Email verification.' });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    otps.set(user.email.toLowerCase(), {
-      otp,
-      expiresAt: Date.now() + 5 * 60 * 1000,
-      type: 'forgot',
-      payload: { userId: user._id, newPassword }
-    });
-
-    let result;
-    if (method === 'sms') {
-      result = await sendOTPSMSHelper(user.phoneNumber, otp);
-    } else {
-      result = await sendOTPEmailHelper(user.email, otp);
-    }
-
-    if (result.success) {
-      res.json({
-        success: true,
-        message: 'OTP sent successfully.',
-        email: user.email,
-        phoneNumber: user.phoneNumber || '',
-        preferred2faMethod: preferredMethod,
-        activeDeliveryMethod: method
-      });
-    } else {
-      res.status(500).json({
-        error: `Failed to send OTP via ${method.toUpperCase()}`,
-        details: result.details,
-        devFallbackOtp: result.devFallbackOtp,
-        email: user.email,
-        phoneNumber: user.phoneNumber || '',
-        preferred2faMethod: preferredMethod,
-        activeDeliveryMethod: method
-      });
-    }
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
+// ==========================================
+// 3. VERIFY OTP: Complete Signup / Login
+// ==========================================
 router.post('/api/auth/verify-action-otp', async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required.' });
@@ -223,99 +115,125 @@ router.post('/api/auth/verify-action-otp', async (req, res) => {
   try {
     otps.delete(email.toLowerCase());
 
+    // --- SIGNUP FLOW ---
     if (record.type === 'signup') {
-      const { fullName, username, password, dob, age, phoneNumber, preferred2faMethod } = record.payload;
+      const { fullName, username, password, dob } = record.payload;
 
       const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(password, salt);
+      const password_hash = await bcrypt.hash(password, salt);
 
-      const { data: newUser, error } = await supabase.from('users').insert([{
-        fullName,
+      // Insert directly into the public.profiles table (bypassing auth.users)
+      const { data: newUser, error } = await supabase.from('profiles').insert([{
+        full_name: fullName,
         email: email.toLowerCase(),
         username: username.toLowerCase(),
-        passwordHash,
-        dob,
-        age,
-        phoneNumber: phoneNumber || '',
-        preferred2faMethod: preferred2faMethod || 'email'
+        password_hash,
       }]).select().single();
 
       if (error) throw error;
+      
+      // Auto-create settings
+      await supabase.from('settings').insert([{ user_id: newUser.id }]);
 
-      const token = jwt.sign({ id: newUser._id, username: newUser.username }, JWT_SECRET, { expiresIn: '7d' });
+      // Issue custom JWT (Must match Supabase format for RLS!)
+      const token = jwt.sign(
+        { 
+          sub: newUser.id,
+          role: 'authenticated', 
+          email: newUser.email,
+          aud: 'authenticated'
+        }, 
+        JWT_SECRET, 
+        { expiresIn: '7d' }
+      );
+      
       return res.json({
         success: true,
         message: 'Account registered successfully.',
         token,
-        user: {
-          id: newUser._id,
-          fullName: newUser.fullName,
-          email: newUser.email,
-          username: newUser.username,
-          dob: newUser.dob,
-          age: newUser.age,
-          profileImage: newUser.profileImage,
-          phoneNumber: newUser.phoneNumber,
-          preferred2faMethod: newUser.preferred2faMethod
-        }
+        user: newUser
       });
     }
 
+    // --- LOGIN FLOW ---
     if (record.type === 'login') {
       const { userId } = record.payload;
-      const { data: user, error } = await supabase.from('users').select('*').eq('_id', userId).single();
+      const { data: user, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
       if (error || !user) return res.status(404).json({ error: 'User account not found.' });
 
-      const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
-      return res.json({
-        success: true,
-        message: 'Signed in successfully.',
-        token,
-        user: {
-          id: user._id,
-          fullName: user.fullName,
+      const token = jwt.sign(
+        { 
+          sub: user.id,
+          role: 'authenticated', 
           email: user.email,
-          username: user.username,
-          dob: user.dob,
-          age: user.age,
-          profileImage: user.profileImage,
-          phoneNumber: user.phoneNumber,
-          preferred2faMethod: user.preferred2faMethod
-        }
-      });
-    }
-
-    if (record.type === 'forgot') {
-      const { userId, newPassword } = record.payload;
-      const { data: user, error } = await supabase.from('users').select('*').eq('_id', userId).single();
-      if (error || !user) return res.status(404).json({ error: 'User account not found.' });
-
-      const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(newPassword, salt);
-
-      const { data: updatedUser, error: updateError } = await supabase.from('users').update({ passwordHash }).eq('_id', userId).select().single();
-      if (updateError) throw updateError;
-
-      const token = jwt.sign({ id: updatedUser._id, username: updatedUser.username }, JWT_SECRET, { expiresIn: '7d' });
+          aud: 'authenticated'
+        }, 
+        JWT_SECRET, 
+        { expiresIn: '7d' }
+      );
+      
       return res.json({
         success: true,
-        message: 'Password reset completed successfully.',
+        message: 'Login successful.',
         token,
-        user: {
-          id: updatedUser._id,
-          fullName: updatedUser.fullName,
-          email: updatedUser.email,
-          username: updatedUser.username,
-          dob: updatedUser.dob,
-          age: updatedUser.age,
-          profileImage: updatedUser.profileImage,
-          phoneNumber: updatedUser.phoneNumber,
-          preferred2faMethod: updatedUser.preferred2faMethod
-        }
+        user
       });
     }
 
-    res.status(400).json({ error: 'Unsupported action verification.' });
+    return res.status(400).json({ error: 'Invalid OTP type.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
+// 4. FORGOT PASSWORD FLOW
+// ==========================================
+router.post('/api/auth/forgot-otp', async (req, res) => {
+  const { username, newPassword } = req.body;
+  if (!username || !newPassword) return res.status(400).json({ error: 'Username and new password are required.' });
+
+  try {
+    const { data: user } = await supabase.from('profiles').select('id, email').eq('username', username.toLowerCase()).maybeSingle();
+    if (!user) return res.status(404).json({ error: 'Username not found.' });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otps.set(user.email.toLowerCase(), {
+      otp,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+      type: 'forgot',
+      payload: { userId: user.id, newPassword }
+    });
+
+    const result = await sendOTPEmailHelper(user.email, otp);
+
+    if (result.success) {
+      res.json({ success: true, message: 'OTP sent successfully.', email: user.email });
+    } else {
+      res.status(500).json({ error: `Failed to send OTP`, devFallbackOtp: result.devFallbackOtp });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/api/auth/verify-forgot-otp', async (req, res) => {
+  const { email, otp } = req.body;
+  const record = otps.get(email.toLowerCase());
+  
+  if (!record || record.type !== 'forgot') return res.status(400).json({ error: 'No forgot password session found.' });
+  if (Date.now() > record.expiresAt) { otps.delete(email.toLowerCase()); return res.status(400).json({ error: 'OTP expired.' }); }
+  if (record.otp !== otp) return res.status(400).json({ error: 'Invalid OTP.' });
+
+  try {
+    otps.delete(email.toLowerCase());
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(record.payload.newPassword, salt);
+
+    const { error } = await supabase.from('profiles').update({ password_hash }).eq('id', record.payload.userId);
+    if (error) throw error;
+
+    res.json({ success: true, message: 'Password reset successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

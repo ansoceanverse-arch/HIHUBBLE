@@ -1,3 +1,9 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 const API_URL = (
   window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1' ||
@@ -51,7 +57,7 @@ function saveUsersDB(db) {
   localStorage.setItem('invibe_users_db', JSON.stringify(db));
 }
 
-export function initAuth() {
+export async function initAuth() {
   const authView = document.getElementById('auth-view');
   const appContainer = document.getElementById('app-container');
   const authForm = document.getElementById('auth-form');
@@ -125,42 +131,18 @@ export function initAuth() {
     updateAppUI();
   }
 
-  // ─── SESSION CHECK ────────────────────────────────────────────────────────────
-  // Set to false to always show sign-in/sign-up page first when the app is run/refreshed.
-  // Change to `localStorage.getItem('invibeIsLoggedIn') === 'true'` if you want auto-login.
-  const isLoggedIn = false;
+  // ─── SESSION CHECK (Custom JWT) ───────────────────────────────────────────────
+  const token = localStorage.getItem('invibe_jwt_token');
+  const isLoggedIn = localStorage.getItem('invibeIsLoggedIn') === 'true';
 
-  if (isLoggedIn) {
-    const userStr = localStorage.getItem('invibeUser');
-    if (userStr) {
-      // Sync session profileImage from db
-      try {
-        const user = JSON.parse(userStr);
-        const users = getUsersDB();
-        const dbUser = users.find(u => u.username.toLowerCase() === user.username.toLowerCase());
-        const token = localStorage.getItem('invibe_jwt_token');
-        if (dbUser && dbUser.profileImage && (!token || token === 'mock-jwt-token')) {
-          localStorage.setItem('invibeProfileImage', dbUser.profileImage);
-        }
-      } catch (e) {
-        console.error('Session sync error:', e);
-      }
-      showAppView();
-    } else {
-      localStorage.removeItem('invibeIsLoggedIn');
-      localStorage.removeItem('invibeUser');
-      localStorage.removeItem('invibeProfileImage');
-      showAuthView();
-    }
-
-    // Wire up event listeners even in logged-in state so logout / nav works
-    wireEventListeners();
-    initProfileUpload();
-    return;
+  if (isLoggedIn && token) {
+    // Optionally inject token into Supabase for RLS
+    // supabase.auth.setSession(...) (not fully supported natively without refresh token, but global headers work for fetch)
+    showAppView();
+  } else {
+    showAuthView();
   }
 
-  // Not logged in — show auth view immediately
-  showAuthView();
   wireEventListeners();
   initProfileUpload();
 
@@ -208,39 +190,35 @@ export function initAuth() {
 
     // ── Trigger Resend OTP Helper ───────────────────────────────────────────
     async function triggerResend(method) {
-      if (otpErrorMsg) otpErrorMsg.textContent = `Sending code via ${method.toUpperCase()}…`;
+      if (otpErrorMsg) otpErrorMsg.textContent = `Sending code via EMAIL…`;
 
       try {
-        let endpoint = 'login-otp';
-        let payload = tempUserData || {};
-
+        let err = null;
         if (isSignUpVerification) {
-          endpoint = 'signup-otp';
-          payload.preferred2faMethod = method;
-          payload.phoneNumber = authPhoneInput ? authPhoneInput.value.trim() : '';
+          // Resend OTP via custom backend
+          const res = await fetch(`${API_URL}/api/auth/signup-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tempUserData) // tempUserData must be saved during signup
+          });
+          if (!res.ok) err = new Error('Failed to resend code');
         } else if (isForgotVerification) {
-          endpoint = 'forgot-otp';
-          payload = {
-            username: tempUserData?.username,
-            newPassword: tempUserData?.newPassword,
-            deliveryMethod: method
-          };
-        } else {
-          endpoint = 'login-otp';
-          payload = {
-            username: tempUserData?.username,
-            password: tempUserData?.password,
-            deliveryMethod: method
-          };
+          // Resend Forgot OTP via custom backend
+          const res = await fetch(`${API_URL}/api/auth/forgot-otp`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: tempUserData.username, newPassword: tempUserData.newPassword })
+          });
+          if (!res.ok) err = new Error('Failed to resend code');
         }
 
-        const result = await sendOTPEmail(endpoint, payload);
-        if (result && result.success) {
+        if (!err) {
           if (otpErrorMsg) {
-            const dest = method === 'sms' ? (result.phoneNumber || 'your phone') : (result.email || 'your email');
-            otpErrorMsg.innerHTML = `<span style="color:#22c55e">Code sent via ${method.toUpperCase()} to ${dest}</span>`;
+            otpErrorMsg.innerHTML = `<span style="color:#22c55e">Code sent via EMAIL to ${pendingVerificationEmail}</span>`;
           }
           startResendTimer();
+        } else {
+          throw err;
         }
       } catch (err) {
         if (otpErrorMsg) otpErrorMsg.textContent = err.message || 'Failed to resend code';
@@ -336,19 +314,28 @@ export function initAuth() {
         let verifyData = null;
 
         try {
-          const res = await fetch(`${API_URL}/api/auth/verify-action-otp`, {
+          let type = 'signup';
+          if (isForgotVerification) type = 'recovery';
+
+          const res = await fetch(`${API_URL}/api/auth/${isForgotVerification ? 'verify-forgot-otp' : 'verify-action-otp'}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: pendingVerificationEmail, otp: code })
           });
-          try { verifyData = await res.json(); } catch { /* ignore */ }
-          if (res.ok && verifyData && !verifyData.error) {
-            isVerified = true;
+          const fetchdata = await res.json();
+          if (!res.ok || fetchdata.error) {
+            errorMsg = fetchdata.error || 'Invalid verification code.';
           } else {
-            errorMsg = (verifyData && verifyData.error) || errorMsg;
+            isVerified = true;
+            verifyData = fetchdata;
+            
+            if (!isForgotVerification && fetchdata.token) {
+               localStorage.setItem('invibe_jwt_token', fetchdata.token);
+               localStorage.setItem('invibeIsLoggedIn', 'true');
+               localStorage.setItem('invibeUser', JSON.stringify(fetchdata.user));
+            }
           }
         } catch (err) {
-          console.error('Verification error:', err);
           errorMsg = err.message || errorMsg;
         }
 
@@ -359,33 +346,20 @@ export function initAuth() {
           return;
         }
 
-        // ── Verification succeeded ──
         if (otpModal) otpModal.classList.remove('active');
         if (otpErrorMsg) otpErrorMsg.textContent = '';
 
-        try {
-          if (verifyData && verifyData.token) {
-            localStorage.setItem('invibe_jwt_token', verifyData.token);
-            localStorage.setItem('invibeIsLoggedIn', 'true');
-            localStorage.setItem('invibeUser', JSON.stringify(verifyData.user));
-            localStorage.setItem('invibeProfileImage', verifyData.user.profileImage || '');
-          }
+        if (verifyData && verifyData.access_token) {
+          localStorage.setItem('invibe_jwt_token', verifyData.access_token);
+        }
 
-          if (isSignUpVerification) {
-            // Show profile photo capture modal
-            if (profileUploadModal) {
-              profileUploadModal.classList.add('active');
-              if (window.startLiveCamera) window.startLiveCamera();
-            }
-          } else {
-            showAppView();
+        if (isSignUpVerification) {
+          if (profileUploadModal) {
+            profileUploadModal.classList.add('active');
+            if (window.startLiveCamera) window.startLiveCamera();
           }
-        } catch (err) {
-          console.error('Post-verification error:', err);
-          if (otpErrorMsg) {
-            otpModal.classList.add('active');
-            otpErrorMsg.textContent = err.message;
-          }
+        } else {
+          showAppView();
         }
       });
     }
@@ -440,14 +414,17 @@ export function initAuth() {
     if (welcomeSignupBtn) welcomeSignupBtn.addEventListener('click', () => showAuthForm('signup'));
     if (authBackBtn) authBackBtn.addEventListener('click', showWelcome);
 
-    // ── Logout ──────────────────────────────────────────────────────────────
+    // ── Logout (Supabase) ───────────────────────────────────────────────────
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
-        localStorage.removeItem('invibeIsLoggedIn');
-        localStorage.removeItem('invibeUser');
-        localStorage.removeItem('invibeProfileImage');
-        showAuthView();
+        
+      localStorage.removeItem('invibe_jwt_token');
+      localStorage.removeItem('invibeIsLoggedIn');
+      localStorage.removeItem('invibeUser');
+      localStorage.removeItem('invibeProfileImage');
+
+        // onAuthStateChange handles the UI reset
       });
     }
 
@@ -586,6 +563,7 @@ export function initAuth() {
     }
 
     // ── Form submission ─────────────────────────────────────────────────────
+
     if (authForm) {
       authForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -602,42 +580,39 @@ export function initAuth() {
           if (createAccountBtn) { createAccountBtn.disabled = true; createAccountBtn.textContent = 'Verifying…'; }
 
           try {
-            if (otpErrorMsg) otpErrorMsg.textContent = '';
-            otpInputs.forEach(i => i.value = '');
-
-            tempUserData = { username: usernameVal, password: passwordVal };
-            const result = await sendOTPEmail('login-otp', { username: usernameVal, password: passwordVal });
+            const resolveRes = await fetch(`${API_URL}/api/auth/resolve-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: usernameVal })
+            });
+            const resolveData = await resolveRes.json();
+            if (!resolveRes.ok) throw new Error(resolveData.error || 'Failed to resolve username');
+            
+            const res = await fetch(`${API_URL}/api/auth/login-otp`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: usernameVal, password: passwordVal })
+            });
+            const data = await res.json();
+            
             if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Sign In'; }
 
-            if (result && result.success) {
-              pendingVerificationEmail = result.email;
-              pendingVerificationPhone = result.phoneNumber;
-              activeDeliveryMethod = result.activeDeliveryMethod || result.preferred2faMethod || 'email';
-
-              // Configure tabs
-              if (otpDeliverySmsBtn) {
-                if (!pendingVerificationPhone) {
-                  otpDeliverySmsBtn.classList.add('disabled');
-                } else {
-                  otpDeliverySmsBtn.classList.remove('disabled');
-                }
-              }
-
-              // Highlight active tab
-              if (activeDeliveryMethod === 'sms') {
-                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.add('active');
-                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.remove('active');
-                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your mobile number (${pendingVerificationPhone}).`;
-              } else {
-                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.add('active');
-                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.remove('active');
-                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your email address (${pendingVerificationEmail}).`;
-              }
-
+            if (!res.ok) {
+              throw new Error(data.error || 'Login failed');
+            } else {
+              pendingVerificationEmail = data.email;
               isSignUpVerification = false;
               isForgotVerification = false;
-              startResendTimer();
+              
+              if (authWelcomePanel) authWelcomePanel.classList.remove('active');
+              if (authGlassContainer) authGlassContainer.classList.add('hidden');
               if (otpModal) otpModal.classList.add('active');
+              
+              const storedEmailEl = document.getElementById('stored-email');
+              if (storedEmailEl) storedEmailEl.textContent = data.email;
+              
+              startResendTimer();
+              if (otpInputs.length > 0) otpInputs[0].focus();
             }
           } catch (err) {
             if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Sign In'; }
@@ -659,34 +634,35 @@ export function initAuth() {
             if (otpErrorMsg) otpErrorMsg.textContent = '';
             otpInputs.forEach(i => i.value = '');
 
+            const resolveRes = await fetch(`${API_URL}/api/auth/resolve-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: usernameVal })
+            });
+            const resolveData = await resolveRes.json();
+            if (!resolveRes.ok) throw new Error(resolveData.error || 'Failed to resolve username');
+
+            const resolvedEmail = resolveData.email;
             tempUserData = { username: usernameVal, newPassword: passwordVal };
-            const result = await sendOTPEmail('forgot-otp', { username: usernameVal, newPassword: passwordVal });
+
+            const res = await fetch(`${API_URL}/api/auth/forgot-otp`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: usernameVal, newPassword: passwordVal })
+            });
+            const data = await res.json();
+            let error = !res.ok ? new Error(data.error || 'Failed to start reset') : null;
             if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Reset Password'; }
 
-            if (result && result.success) {
-              pendingVerificationEmail = result.email;
-              pendingVerificationPhone = result.phoneNumber;
-              activeDeliveryMethod = result.activeDeliveryMethod || result.preferred2faMethod || 'email';
+            if (error) {
+              throw error;
+            } else {
+              pendingVerificationEmail = resolvedEmail;
+              activeDeliveryMethod = 'email';
 
-              // Configure tabs
-              if (otpDeliverySmsBtn) {
-                if (!pendingVerificationPhone) {
-                  otpDeliverySmsBtn.classList.add('disabled');
-                } else {
-                  otpDeliverySmsBtn.classList.remove('disabled');
-                }
-              }
-
-              // Highlight active tab
-              if (activeDeliveryMethod === 'sms') {
-                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.add('active');
-                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.remove('active');
-                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your mobile number (${pendingVerificationPhone}).`;
-              } else {
-                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.add('active');
-                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.remove('active');
-                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your email address (${pendingVerificationEmail}).`;
-              }
+              if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your email address (${pendingVerificationEmail}).`;
+              if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.add('disabled');
+              if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.add('active');
 
               isSignUpVerification = false;
               isForgotVerification = true;
@@ -705,23 +681,12 @@ export function initAuth() {
           const username = document.getElementById('auth-username').value.trim();
           const password = document.getElementById('auth-password').value;
           const dob = document.getElementById('auth-dob').value;
-          const phoneNumber = authPhoneInput ? authPhoneInput.value.trim() : '';
-
+          
           if (!fullName || !email || !username || !password || !dob) {
             alert('Please fill in all fields.');
             return;
           }
           if (password.length < 6) { alert('Password must be at least 6 characters.'); return; }
-          if (selected2faPreference === 'sms' && !phoneNumber) {
-            alert('Please enter your Phone Number for SMS verification.');
-            return;
-          }
-
-          const today = new Date();
-          const dobDate = new Date(dob);
-          let age = today.getFullYear() - dobDate.getFullYear();
-          const m = today.getMonth() - dobDate.getMonth();
-          if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) age--;
 
           if (createAccountBtn) { createAccountBtn.disabled = true; createAccountBtn.textContent = 'Sending OTP…'; }
 
@@ -729,44 +694,43 @@ export function initAuth() {
             if (otpErrorMsg) otpErrorMsg.textContent = '';
             otpInputs.forEach(i => i.value = '');
 
-            const signupData = {
-              fullName,
-              email,
-              username,
-              password,
-              dob,
-              age,
-              phoneNumber,
-              preferred2faMethod: selected2faPreference
-            };
-            tempUserData = signupData;
-            const result = await sendOTPEmail('signup-otp', signupData);
+            // PRE-CHECK: Ensure username is unique before calling Supabase Auth
+            const trimmedUsername = username.toLowerCase();
+            const { data: existingProfile, error: profileError } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('username', trimmedUsername)
+              .limit(1);
+
+            if (profileError) {
+              console.error('Username check error:', profileError);
+              throw new Error('Failed to validate username availability.');
+            }
+
+            if (existingProfile && existingProfile.length > 0) {
+              throw new Error('Username is already taken. Please choose another.');
+            }
+
+            tempUserData = { fullName, email, username, password, dob };
+            const res = await fetch(`${API_URL}/api/auth/signup-otp`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(tempUserData)
+            });
+            const data = await res.json();
+            let error = !res.ok ? new Error(data.error || 'Signup failed') : null;
+
             if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Create Account'; }
 
-            if (result && result.success) {
+            if (error) {
+              throw error;
+            } else {
               pendingVerificationEmail = email;
-              pendingVerificationPhone = phoneNumber;
-              activeDeliveryMethod = selected2faPreference;
+              activeDeliveryMethod = 'email';
 
-              // Configure tabs
-              if (otpDeliverySmsBtn) {
-                if (!pendingVerificationPhone) {
-                  otpDeliverySmsBtn.classList.add('disabled');
-                } else {
-                  otpDeliverySmsBtn.classList.remove('disabled');
-                }
-              }
-
-              // Highlight active tab
-              if (activeDeliveryMethod === 'sms') {
-                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.add('active');
-                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.remove('active');
-                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your mobile number (${pendingVerificationPhone}).`;
-              } else {
-                if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.add('active');
-                if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.remove('active');
-                if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your email address (${pendingVerificationEmail}).`;
-              }
+              if (otpInstructionText) otpInstructionText.textContent = `Please enter the 6-digit verification code sent to your email address (${pendingVerificationEmail}).`;
+              if (otpDeliverySmsBtn) otpDeliverySmsBtn.classList.add('disabled');
+              if (otpDeliveryEmailBtn) otpDeliveryEmailBtn.classList.add('active');
 
               isSignUpVerification = true;
               isForgotVerification = false;
@@ -775,7 +739,12 @@ export function initAuth() {
             }
           } catch (err) {
             if (createAccountBtn) { createAccountBtn.disabled = false; createAccountBtn.textContent = 'Create Account'; }
-            alert(err.message);
+            console.error("Signup Error:", err);
+            let msg = err.message;
+            if (!msg || msg === '{}' || typeof msg === 'object') {
+              msg = JSON.stringify(err);
+            }
+            alert("Signup Error: " + msg);
           }
         }
       });

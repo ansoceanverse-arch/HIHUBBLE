@@ -49,16 +49,12 @@ document.addEventListener('DOMContentLoaded', () => {
       post1: 12400,
       post2: 8200
     },
-    stories: [
-      { name: "Alex Rivers", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80", img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80", time: "2 hours ago" },
-      { name: "Jamie Sun", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80", img: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80", time: "5 hours ago" },
-      { name: "Sarah Chen", avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&h=150&q=80", img: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=800&q=80", time: "Yesterday" },
-      { name: "Marcus", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80", img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80", time: "3 days ago" },
-      { name: "Emma Johnson", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&h=150&q=80", img: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=800&q=80", time: "1 week ago" }
-    ],
+    storyGroups: [],
+    activeGroupIndex: 0,
     activeStoryIndex: 0,
     storyProgressInterval: null,
     storyProgressPercent: 0,
+    isStoryPaused: false,
     isLudoRolling: false
   };
 
@@ -706,50 +702,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // --- PREMIUM STORY AUTO-PLAY VIEWER SYSTEM ---
-  const storyCards = document.querySelectorAll('.story-card.active-story');
   const storyViewer = document.getElementById('story-viewer-modal');
   const storyViewerClose = document.getElementById('story-viewer-close');
+  const storyViewerDelete = document.getElementById('story-viewer-delete');
   const storyViewerAvatar = document.getElementById('story-viewer-avatar');
   const storyViewerName = document.getElementById('story-viewer-name');
   const storyViewerTime = document.getElementById('story-viewer-time');
   const storyViewerImg = document.getElementById('story-viewer-img');
   const storyProgressBars = document.getElementById('story-progress-bars');
+  const storyContentBox = document.getElementById('story-viewer-content-box');
 
   const storyPrev = document.getElementById('story-prev-btn');
   const storyNext = document.getElementById('story-next-btn');
 
-  function openStoryViewer(index) {
-    state.activeStoryIndex = index;
+  function openStoryViewer(groupIndex, storyIndex = 0) {
+    if (!state.storyGroups[groupIndex]) return;
+    state.activeGroupIndex = groupIndex;
+    state.activeStoryIndex = storyIndex;
     storyViewer.classList.add('active');
-    loadStoryContent(index);
+    loadStoryContent(groupIndex, storyIndex);
   }
 
-  function loadStoryContent(index) {
-    const data = state.stories[index];
-    if (!data) {
+  async function deleteCurrentStory() {
+    const group = state.storyGroups[state.activeGroupIndex];
+    if (!group) return;
+    const storyData = group.stories[state.activeStoryIndex];
+    if (!storyData) return;
+    const token = localStorage.getItem('invibe_jwt_token');
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/stories/${storyData._id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to delete story');
+      showToast('Story deleted successfully!');
+      closeStoryViewer();
+      loadStories();
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to delete story.');
+    }
+  }
+
+  function loadStoryContent(groupIndex, storyIndex) {
+    const group = state.storyGroups[groupIndex];
+    if (!group || !group.stories[storyIndex]) {
       closeStoryViewer();
       return;
     }
+    const data = group.stories[storyIndex];
 
     storyViewerAvatar.src = data.avatar;
     storyViewerName.textContent = data.name;
     storyViewerTime.textContent = data.time;
     storyViewerImg.src = data.img;
 
-    // Update like button state
+    const currentUser = getCurrentUser();
+    const currentUserId = currentUser ? (currentUser.id || currentUser._id) : null;
+    if (data.authorId === currentUserId) {
+      storyViewerDelete.style.display = 'block';
+    } else {
+      storyViewerDelete.style.display = 'none';
+    }
+
     updateStoryLikeUI(data.isLiked || false, data.likesCount || 0);
 
-    // Reset/Re-build Progress Bars
     storyProgressBars.innerHTML = '';
-    for (let i = 0; i < state.stories.length; i++) {
+    for (let i = 0; i < group.stories.length; i++) {
       const barWrapper = document.createElement('div');
       barWrapper.className = 'story-progress-bar-wrapper';
       const barFill = document.createElement('div');
       barFill.className = 'story-progress-bar-fill';
 
-      if (i < index) {
+      if (i < storyIndex) {
         barFill.style.width = '100%';
-      } else if (i > index) {
+      } else if (i > storyIndex) {
         barFill.style.width = '0%';
       }
 
@@ -757,29 +786,33 @@ document.addEventListener('DOMContentLoaded', () => {
       storyProgressBars.appendChild(barWrapper);
     }
 
+    state.isStoryPaused = false;
     startStoryTimer();
   }
 
   function startStoryTimer() {
-    stopStoryTimer();
-    state.storyProgressPercent = 0;
-
-    const activeFill = storyProgressBars.children[state.activeStoryIndex].querySelector('.story-progress-bar-fill');
-
+    if (state.storyProgressInterval) return;
+    
+    const activeFill = storyProgressBars.children[state.activeStoryIndex]?.querySelector('.story-progress-bar-fill');
+    
     state.storyProgressInterval = setInterval(() => {
-      state.storyProgressPercent += 0.4; // 0.4 * 250 ticks = 100% (5000ms total)
+      if (state.isStoryPaused) return;
+      state.storyProgressPercent += 0.4;
       if (activeFill) activeFill.style.width = `${state.storyProgressPercent}%`;
 
       if (state.storyProgressPercent >= 100) {
         stopStoryTimer();
-        // Go to next story
-        if (state.activeStoryIndex < state.stories.length - 1) {
-          openStoryViewer(state.activeStoryIndex + 1);
+        state.storyProgressPercent = 0;
+        const group = state.storyGroups[state.activeGroupIndex];
+        if (state.activeStoryIndex < group.stories.length - 1) {
+          openStoryViewer(state.activeGroupIndex, state.activeStoryIndex + 1);
+        } else if (state.activeGroupIndex < state.storyGroups.length - 1) {
+          openStoryViewer(state.activeGroupIndex + 1, 0);
         } else {
           closeStoryViewer();
         }
       }
-    }, 20); // 20ms interval for smooth 50 FPS refresh rate
+    }, 20);
   }
 
   function stopStoryTimer() {
@@ -791,31 +824,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function closeStoryViewer() {
     stopStoryTimer();
+    state.storyProgressPercent = 0;
     storyViewer.classList.remove('active');
   }
 
-  // Circular stories card click trigger
-  storyCards.forEach(card => {
-    card.addEventListener('click', () => {
-      const idx = parseInt(card.getAttribute('data-story-index'));
-      openStoryViewer(idx);
-    });
-  });
+  // Tap to Pause implementation
+  const pauseStory = () => { state.isStoryPaused = true; };
+  const resumeStory = () => { state.isStoryPaused = false; };
+  if (storyContentBox) {
+    storyContentBox.addEventListener('mousedown', pauseStory);
+    storyContentBox.addEventListener('mouseup', resumeStory);
+    storyContentBox.addEventListener('mouseleave', resumeStory);
+    storyContentBox.addEventListener('touchstart', pauseStory);
+    storyContentBox.addEventListener('touchend', resumeStory);
+  }
 
   if (storyViewerClose) storyViewerClose.addEventListener('click', closeStoryViewer);
+  if (storyViewerDelete) storyViewerDelete.addEventListener('click', deleteCurrentStory);
+  
   if (storyPrev) {
     storyPrev.addEventListener('click', (e) => {
       e.stopPropagation();
+      stopStoryTimer();
+      state.storyProgressPercent = 0;
       if (state.activeStoryIndex > 0) {
-        openStoryViewer(state.activeStoryIndex - 1);
+        openStoryViewer(state.activeGroupIndex, state.activeStoryIndex - 1);
+      } else if (state.activeGroupIndex > 0) {
+        const prevGroup = state.storyGroups[state.activeGroupIndex - 1];
+        openStoryViewer(state.activeGroupIndex - 1, prevGroup.stories.length - 1);
       }
     });
   }
   if (storyNext) {
     storyNext.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (state.activeStoryIndex < state.stories.length - 1) {
-        openStoryViewer(state.activeStoryIndex + 1);
+      stopStoryTimer();
+      state.storyProgressPercent = 0;
+      const group = state.storyGroups[state.activeGroupIndex];
+      if (state.activeStoryIndex < group.stories.length - 1) {
+        openStoryViewer(state.activeGroupIndex, state.activeStoryIndex + 1);
+      } else if (state.activeGroupIndex < state.storyGroups.length - 1) {
+        openStoryViewer(state.activeGroupIndex + 1, 0);
       } else {
         closeStoryViewer();
       }
@@ -898,19 +947,29 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!storyScroll) return;
 
       const yourVibeBtn = document.getElementById('story-btn-current');
+      const draftsBtn = document.getElementById('story-drafts-btn');
       storyScroll.innerHTML = '';
-      if (yourVibeBtn) {
-        storyScroll.appendChild(yourVibeBtn);
-      }
+      if (yourVibeBtn) storyScroll.appendChild(yourVibeBtn);
+      if (draftsBtn) storyScroll.appendChild(draftsBtn);
 
       const currentUser = getCurrentUser();
       const currentUserId = currentUser ? (currentUser.id || currentUser._id) : null;
-      const mappedStories = [];
+      
+      const groupedStories = {};
       dbStories.forEach(story => {
         const likes = story.likes || [];
-        mappedStories.push({
+        const authorId = story.author._id || story.author.id;
+        if (!groupedStories[authorId]) {
+          groupedStories[authorId] = {
+            authorId: authorId,
+            name: story.author.fullName,
+            avatar: story.author.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80',
+            stories: []
+          };
+        }
+        groupedStories[authorId].stories.push({
           _id: story._id,
-          authorId: story.author._id,
+          authorId: authorId,
           name: story.author.fullName,
           avatar: story.author.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80',
           img: story.mediaUrl,
@@ -919,22 +978,23 @@ document.addEventListener('DOMContentLoaded', () => {
           isLiked: currentUserId ? likes.includes(currentUserId) : false
         });
       });
-      state.stories = mappedStories;
+      
+      state.storyGroups = Object.values(groupedStories);
 
-      state.stories.forEach((story, idx) => {
+      state.storyGroups.forEach((group, idx) => {
         const card = document.createElement('div');
         card.className = 'story-card active-story';
-        card.setAttribute('data-story-index', idx);
+        card.setAttribute('data-group-index', idx);
         card.innerHTML = `
           <div class="story-avatar-container">
             <div class="story-ring"></div>
-            <img src="${story.avatar}" alt="${story.name}" />
+            <img src="${group.avatar}" alt="${group.name}" />
           </div>
-          <span class="story-username">${story.name.split(' ')[0]}</span>
+          <span class="story-username">${group.name.split(' ')[0]}</span>
         `;
 
         card.addEventListener('click', () => {
-          openStoryViewer(idx);
+          openStoryViewer(idx, 0);
           card.classList.add('story-seen');
         });
 
@@ -960,14 +1020,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.loadStories = loadStories;
 
-  // Post story upload simulation
+  // Story Creation & Drafts logic
   const addStoryBtn = document.getElementById('add-story-file-trigger');
   const storyFileInput = document.getElementById('story-file-input');
+  const storyCreationModal = document.getElementById('story-creation-modal');
+  const storyCreationPreview = document.getElementById('story-creation-preview');
+  const storyCreationCancel = document.getElementById('story-creation-cancel');
+  const storyCreationDraft = document.getElementById('story-creation-draft');
+  const storyCreationPublish = document.getElementById('story-creation-publish');
+  const storyDraftsBtn = document.getElementById('story-drafts-btn');
+  const storyDraftsModal = document.getElementById('story-drafts-modal');
+  const storyDraftsClose = document.getElementById('story-drafts-close');
+  const storyDraftsList = document.getElementById('story-drafts-list');
+  let currentStoryImageBase64 = null;
 
   if (addStoryBtn) {
     addStoryBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      storyFileInput.click();
+      if (storyFileInput) storyFileInput.click();
     });
   }
 
@@ -977,35 +1047,110 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = storyFileInput.files[0];
         const reader = new FileReader();
         reader.onload = (e) => {
-          const imgUrl = e.target.result;
-          const token = localStorage.getItem('invibe_jwt_token');
-          if (!token) {
-            showToast('Please log in to publish a story! 🔐');
-            return;
-          }
-          fetch(`${API_URL}/api/stories`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              mediaUrl: imgUrl,
-              mediaType: 'image'
-            })
-          })
-            .then(res => res.json())
-            .then(newStory => {
-              loadStories();
-              showToast('New story published successfully! 📸✨');
-            })
-            .catch(err => {
-              console.error(err);
-              showToast('Failed to publish story.');
-            });
+          currentStoryImageBase64 = e.target.result;
+          if (storyCreationPreview) storyCreationPreview.src = currentStoryImageBase64;
+          if (storyCreationModal) storyCreationModal.classList.add('active');
+          storyFileInput.value = '';
         };
         reader.readAsDataURL(file);
       }
+    });
+  }
+
+  const closeStoryCreation = () => {
+    if (storyCreationModal) storyCreationModal.classList.remove('active');
+    currentStoryImageBase64 = null;
+  };
+  if (storyCreationCancel) storyCreationCancel.addEventListener('click', closeStoryCreation);
+
+  async function submitStory(isDraft) {
+    const token = localStorage.getItem('invibe_jwt_token');
+    if (!token) {
+      showToast('Please log in first! 🔐');
+      return;
+    }
+    try {
+      const res = await fetch(`${API_URL}/api/stories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ mediaUrl: currentStoryImageBase64, mediaType: 'image', isDraft })
+      });
+      if (!res.ok) throw new Error('Failed to save story');
+      showToast(isDraft ? 'Draft saved!' : 'Story published successfully! 📸✨');
+      closeStoryCreation();
+      loadStories();
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to process story.');
+    }
+  }
+
+  if (storyCreationPublish) storyCreationPublish.addEventListener('click', () => submitStory(false));
+  if (storyCreationDraft) storyCreationDraft.addEventListener('click', () => submitStory(true));
+
+  async function loadDrafts() {
+    const token = localStorage.getItem('invibe_jwt_token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/api/stories/drafts`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to fetch drafts');
+      const drafts = await res.json();
+      if (storyDraftsList) {
+        storyDraftsList.innerHTML = '';
+        if (drafts.length === 0) {
+          storyDraftsList.innerHTML = '<p style="color: white; text-align: center;">No drafts saved.</p>';
+          return;
+        }
+        drafts.forEach(draft => {
+          const div = document.createElement('div');
+          div.style = 'display: flex; gap: 12px; align-items: center; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;';
+          div.innerHTML = `
+            <img src="${draft.mediaUrl}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;" />
+            <div style="flex: 1; color: white;">
+              <p style="margin: 0; font-size: 14px; color: var(--text-muted);">${formatTimeAgo(draft.createdAt)}</p>
+            </div>
+            <button class="btn btn-primary publish-draft-btn" data-id="${draft._id}" style="padding: 6px 12px; font-size: 12px;">Publish</button>
+            <button class="btn btn-secondary delete-draft-btn" data-id="${draft._id}" style="padding: 6px 12px; font-size: 12px; background: rgba(255,0,0,0.2);">Delete</button>
+          `;
+          storyDraftsList.appendChild(div);
+        });
+
+        document.querySelectorAll('.publish-draft-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            await fetch(`${API_URL}/api/stories/${id}/publish`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } });
+            showToast('Draft published!');
+            loadDrafts();
+            loadStories();
+          });
+        });
+        document.querySelectorAll('.delete-draft-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            await fetch(`${API_URL}/api/stories/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            showToast('Draft deleted!');
+            loadDrafts();
+          });
+        });
+      }
+    } catch(err) {
+      console.error(err);
+    }
+  }
+
+  if (storyDraftsBtn) {
+    storyDraftsBtn.addEventListener('click', () => {
+      if (storyDraftsModal) {
+        storyDraftsModal.classList.add('active');
+        loadDrafts();
+      }
+    });
+  }
+  if (storyDraftsClose) {
+    storyDraftsClose.addEventListener('click', () => {
+      if (storyDraftsModal) storyDraftsModal.classList.remove('active');
     });
   }
 
@@ -1587,35 +1732,35 @@ document.addEventListener('DOMContentLoaded', () => {
           `;
         } else if (msg.mediaType === 'video') {
           displayContent = `
-            <div class="bubble-content chat-shared-media-card" onclick="openMediaViewer('${msg._id}')" style="position:relative;">
-              <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.6); border-radius:50%; width:40px; height:40px; display:flex; justify-content:center; align-items:center; color:#fff; pointer-events:none;"><i data-lucide="play" style="width:20px; height:20px;"></i></div>
-              <video src="${decryptedText}" style="max-width: 240px; border-radius: var(--radius-md); max-height: 200px; object-fit: cover;" muted></video>
+            <div class="bubble-content chat-shared-media-card" style="padding: 0; background: none; max-width: 240px; position: relative;">
+              <video src="${decryptedText}" style="width: 100%; border-radius: var(--radius-md); max-height: 200px; display: block;" controls></video>
+              <button class="icon-btn" onclick="openMediaViewer('${msg._id}')" style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; z-index: 10;" title="Expand Video">
+                <i data-lucide="maximize-2" style="width: 14px; height: 14px;"></i>
+              </button>
             </div>
           `;
         } else if (msg.mediaType === 'file') {
           displayContent = `
-            <div class="chat-shared-file-container" onclick="openMediaViewer('${msg._id}')">
-              <i data-lucide="file-text" style="width:24px; height:24px; color:var(--primary); min-width:24px;"></i>
-              <div class="chat-shared-file-info">
-                <span class="chat-shared-file-title">${msg.mediaName || 'Document'}</span>
-                <span class="chat-shared-file-size">${msg.mediaSize || ''}</span>
+            <div class="chat-shared-file-container" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+              <div onclick="openMediaViewer('${msg._id}')" style="display: flex; align-items: center; gap: 8px; flex-grow: 1; cursor: pointer;">
+                <i data-lucide="file-text" style="width:24px; height:24px; color:var(--primary); min-width:24px;"></i>
+                <div class="chat-shared-file-info" style="text-align: left;">
+                  <span class="chat-shared-file-title" style="word-break: break-all; display: block;">${msg.mediaName || 'Document'}</span>
+                  <span class="chat-shared-file-size" style="font-size: 10px; opacity: 0.7; display: block;">${msg.mediaSize || ''}</span>
+                </div>
               </div>
+              <a href="${decryptedText}" download="${msg.mediaName || 'file'}" class="icon-btn" style="color: var(--primary); display: flex; align-items: center; justify-content: center; min-width: 32px; height: 32px; background: rgba(255,255,255,0.05); border-radius: 50%; border: none; cursor: pointer;" title="Download File">
+                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+              </a>
             </div>
           `;
         } else if (msg.mediaType === 'voice') {
           displayContent = `
-            <div class="bubble-content chat-shared-media-card" onclick="openMediaViewer('${msg._id}')">
-              <div style="display:flex; align-items:center; gap:8px; padding:10px; background:rgba(255,255,255,0.05); border-radius:var(--radius-md);">
-                <i data-lucide="mic" style="width:20px; height:20px; color:var(--pink);"></i>
-                <div class="voice-waveform" style="display:flex; gap:2px; height:15px; align-items:center;">
-                  <span style="width:2px; height:6px; background:#fff;"></span>
-                  <span style="width:2px; height:12px; background:#fff;"></span>
-                  <span style="width:2px; height:8px; background:#fff;"></span>
-                  <span style="width:2px; height:14px; background:#fff;"></span>
-                  <span style="width:2px; height:5px; background:#fff;"></span>
-                </div>
-                <span style="font-size:11px; color:var(--text-muted);">${msg.mediaSize || 'Voice Note'}</span>
-              </div>
+            <div class="bubble-content chat-shared-media-card" style="background: none; padding: 0; max-width: 240px; display: flex; align-items: center; gap: 8px; position: relative;">
+              <audio src="${decryptedText}" controls style="flex-grow: 1; display: block; max-width: calc(100% - 36px); height: 40px;"></audio>
+              <button class="icon-btn" onclick="openMediaViewer('${msg._id}')" style="background: rgba(255,255,255,0.05); border: none; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; min-width: 28px;" title="View Details">
+                <i data-lucide="maximize-2" style="width: 14px; height: 14px;"></i>
+              </button>
             </div>
           `;
         } else if (msg.mediaType === 'hub') {
@@ -2812,6 +2957,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let isRecordingAudio = false;
   let recordingTimeout = null;
 
+  // Global variables to store the voice note preview
+  let tempVoiceNoteBase64 = null;
+  let tempVoiceNoteBlobSize = null;
+  let tempVoiceNoteBlob = null;
+
+  const voiceNotePreviewContainer = document.getElementById('voice-note-preview-container');
+  const voiceNotePreviewAudio = document.getElementById('voice-note-preview-audio');
+  const voiceNotePreviewDelete = document.getElementById('voice-note-preview-delete');
+  const voiceNotePreviewSend = document.getElementById('voice-note-preview-send');
+
   if (micClickSimBtn) {
     micClickSimBtn.addEventListener('click', async () => {
       if (isRecordingAudio) {
@@ -2851,40 +3006,30 @@ document.addEventListener('DOMContentLoaded', () => {
             // Convert to base64 Data URL
             const reader = new FileReader();
             reader.onloadend = async () => {
-              const base64Audio = reader.result;
-              const targetUserId = state.currentChatThread;
-              const currentUser = getCurrentUser();
-              const token = localStorage.getItem('invibe_jwt_token');
+              // Store locally in temporary variables
+              tempVoiceNoteBase64 = reader.result;
+              tempVoiceNoteBlobSize = (audioBlob.size / 1024).toFixed(1) + ' KB';
+              tempVoiceNoteBlob = audioBlob;
 
-              if (targetUserId && currentUser && token) {
-                try {
-                  const sizeStr = (audioBlob.size / 1024).toFixed(1) + ' KB';
-                  const secretKey = getChatSecretKey(currentUser.id || currentUser._id, targetUserId);
-                  const encryptedText = encryptMessage(base64Audio, secretKey);
-
-                  await fetch(`${API_URL}/api/chats/message`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                      recipient: targetUserId,
-                      content: encryptedText,
-                      mediaUrl: 'voice_recording',
-                      mediaType: 'voice',
-                      mediaName: `Voice Note - ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-                      mediaSize: sizeStr
-                    })
-                  });
-                  await fetchMessages(targetUserId, true);
-                  loadChatThreads();
-                  showToast('Voice note sent! 🎙️');
-                } catch (err) {
-                  console.error('Audio upload error:', err);
-                  showToast('Failed to send voice note.');
+              // Bind to preview audio player
+              if (voiceNotePreviewAudio) {
+                if (voiceNotePreviewAudio.src && voiceNotePreviewAudio.src.startsWith('blob:')) {
+                  URL.revokeObjectURL(voiceNotePreviewAudio.src);
                 }
+                voiceNotePreviewAudio.src = URL.createObjectURL(audioBlob);
               }
+
+              // Display the preview container
+              if (voiceNotePreviewContainer) {
+                voiceNotePreviewContainer.style.display = 'flex';
+              }
+
+              // Collapse the attachments drawer mimicking standard behavior
+              if (toggleAttachmentsBtn && toggleAttachmentsBtn.classList.contains('active')) {
+                toggleAttachmentsBtn.classList.remove('active');
+                if (attachmentsDrawer) attachmentsDrawer.classList.remove('active');
+              }
+
               resetRecordingUI();
             };
             reader.readAsDataURL(audioBlob);
@@ -2911,6 +3056,75 @@ document.addEventListener('DOMContentLoaded', () => {
           showToast('Could not access microphone: ' + err.message);
           resetRecordingUI();
         }
+      }
+    });
+  }
+
+  if (voiceNotePreviewDelete) {
+    voiceNotePreviewDelete.addEventListener('click', () => {
+      tempVoiceNoteBase64 = null;
+      tempVoiceNoteBlobSize = null;
+      tempVoiceNoteBlob = null;
+      if (voiceNotePreviewAudio) {
+        if (voiceNotePreviewAudio.src && voiceNotePreviewAudio.src.startsWith('blob:')) {
+          URL.revokeObjectURL(voiceNotePreviewAudio.src);
+        }
+        voiceNotePreviewAudio.src = '';
+      }
+      if (voiceNotePreviewContainer) {
+        voiceNotePreviewContainer.style.display = 'none';
+      }
+      showToast('Voice note discarded.');
+    });
+  }
+
+  if (voiceNotePreviewSend) {
+    voiceNotePreviewSend.addEventListener('click', async () => {
+      const targetUserId = state.currentChatThread;
+      const currentUser = getCurrentUser();
+      const token = localStorage.getItem('invibe_jwt_token');
+
+      if (tempVoiceNoteBase64 && targetUserId && currentUser && token) {
+        try {
+          const secretKey = getChatSecretKey(currentUser.id || currentUser._id, targetUserId);
+          const encryptedText = encryptMessage(tempVoiceNoteBase64, secretKey);
+
+          await fetch(`${API_URL}/api/chats/message`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              recipient: targetUserId,
+              content: encryptedText,
+              mediaUrl: 'voice_recording',
+              mediaType: 'voice',
+              mediaName: `Voice Note - ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+              mediaSize: tempVoiceNoteBlobSize
+            })
+          });
+          await fetchMessages(targetUserId, true);
+          loadChatThreads();
+          showToast('Voice note sent! 🎙️');
+        } catch (err) {
+          console.error('Audio upload error:', err);
+          showToast('Failed to send voice note.');
+        }
+      }
+
+      // Clear states
+      tempVoiceNoteBase64 = null;
+      tempVoiceNoteBlobSize = null;
+      tempVoiceNoteBlob = null;
+      if (voiceNotePreviewAudio) {
+        if (voiceNotePreviewAudio.src && voiceNotePreviewAudio.src.startsWith('blob:')) {
+          URL.revokeObjectURL(voiceNotePreviewAudio.src);
+        }
+        voiceNotePreviewAudio.src = '';
+      }
+      if (voiceNotePreviewContainer) {
+        voiceNotePreviewContainer.style.display = 'none';
       }
     });
   }
