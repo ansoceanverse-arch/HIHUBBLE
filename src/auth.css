@@ -1261,3 +1261,111 @@
 .input-group input.has-toggle {
   padding-right: 48px !important;
 }
+
+/* QUICK WEBCAM ONBOARDING STYLES */
+.quick-onboard-card {
+  max-width: 440px;
+  width: 90%;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.onboard-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+.onboard-input-box {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.onboard-input-box i,
+.onboard-input-box svg {
+  position: absolute;
+  left: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  width: 20px;
+  height: 20px;
+}
+
+.onboard-input-box input {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.onboard-input-box input:focus {
+  border-color: #8a5cff;
+  box-shadow: 0 0 16px rgba(138, 92, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.onboard-error-msg {
+  color: #ff4fa3;
+  font-size: 13px;
+  margin: -4px 0 8px 0;
+}
+
+.onboard-btn {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.webcam-circle-container {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  border: 4px solid #8a5cff;
+  box-shadow: 0 0 30px rgba(138, 92, 255, 0.5), inset 0 0 15px rgba(0, 0, 0, 0.5);
+  background: #12092b;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px auto;
+}
+
+#live-webcam-video,
+#live-photo-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.webcam-status-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.webcam-btn-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+}
+

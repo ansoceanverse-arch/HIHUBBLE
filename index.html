@@ -26,11 +26,11 @@
       <div id="auth-particles"></div>
     </div>
 
-    <!-- WELCOME VIEW PANEL -->
+    <!-- QUICK WEBCAM & USERNAME ONBOARDING PANEL -->
     <div id="auth-welcome-panel" class="auth-welcome-panel">
-      <div class="welcome-glass-container">
+      <div class="welcome-glass-container quick-onboard-card">
         <div class="welcome-top">
-          <!-- Brand Bubble matching the provided image style -->
+          <!-- Brand Mascot Bubble -->
           <div class="brand-bubble-frame">
             <div class="brand-bubble-glass">
               <div class="brand-bubble-mascot">
@@ -49,104 +49,46 @@
               </div>
             </div>
           </div>
-
         </div>
 
         <div class="welcome-bottom">
           <h1 class="welcome-title">Welcome to Hi-Hubble</h1>
-          <p class="welcome-subtitle">Your vibrant new space to connect, share, and belong. Join our premium community
-            today.</p>
+          <p class="welcome-subtitle">Enter your username and snap a live photograph to join!</p>
 
-          <div class="welcome-actions">
-            <button id="welcome-signin-btn" class="welcome-btn btn-secondary">Sign In</button>
-            <button id="welcome-signup-btn" class="welcome-btn btn-primary">Sign Up</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="auth-glass-container hidden-container" id="auth-glass-container">
-      <!-- LEFT PANEL -->
-      <div class="auth-left-panel">
-        <div class="auth-mascot-frame">
-          <img src="/hihubble-mascot-circle.png" alt="Hi-Hubble Mascot" class="mascot-img">
-          <div class="auth-floating-icon auth-icon-heart"><i data-lucide="heart"></i></div>
-          <div class="auth-floating-icon auth-icon-bubble"><i data-lucide="message-square"></i></div>
-        </div>
-        <div class="auth-branding">
-          <h1>Hi-Hubble</h1>
-          <p>Your new space to connect,<br>share, and belong.</p>
-        </div>
-      </div>
-
-      <!-- RIGHT PANEL -->
-      <div class="auth-right-panel">
-        <button id="auth-back-btn" class="auth-back-btn" type="button">
-          <i data-lucide="arrow-left"></i> Back to Welcome
-        </button>
-        <h2 style="color: white;">Welcome to Hi-Hubble!<br><span id="auth-form-title">Create your account.</span></h2>
-        <form id="auth-form" class="auth-form">
-          <div class="input-group signup-only">
-            <i data-lucide="user"></i>
-            <input type="text" id="auth-fullname" placeholder="Full Name" required="">
-          </div>
-          <div class="input-group signup-only">
-            <i data-lucide="mail"></i>
-            <input type="email" id="auth-email" placeholder="Email Address" required="">
-          </div>
-          <div class="input-group signup-only">
-            <i data-lucide="phone"></i>
-            <input type="tel" id="auth-phone" placeholder="Phone Number (e.g. +91 98765 43210)">
-          </div>
-          <div class="input-group">
-            <i data-lucide="user-check"></i>
-            <input type="text" id="auth-username" placeholder="Username" required="">
-          </div>
-          <div class="input-group">
-            <i data-lucide="key"></i>
-            <input type="password" id="auth-password" class="has-toggle" placeholder="Password" required="">
-            <button type="button" class="password-toggle-btn" data-target="auth-password" aria-label="Toggle password visibility">
-              <i data-lucide="eye"></i>
+          <!-- STEP 1: USERNAME INPUT -->
+          <div id="onboard-step-1" class="onboard-step">
+            <div class="onboard-input-box">
+              <i data-lucide="user"></i>
+              <input type="text" id="quick-username-input" placeholder="Choose your username..." autocomplete="off">
+            </div>
+            <p id="onboard-username-error" class="onboard-error-msg" style="display: none;"></p>
+            <button id="btn-goto-camera" class="welcome-btn btn-primary onboard-btn">
+              <i data-lucide="camera"></i> Next: Take Live Photo
             </button>
           </div>
-          <div class="forgot-link-container signin-only" style="width: 100%; display: flex; justify-content: flex-end; margin-top: -8px; margin-bottom: 8px;">
-            <a href="#" id="auth-forgot-btn" class="forgot-password-link">Forgot Password?</a>
-          </div>
-          <div class="input-group forgot-only" style="display: none;">
-            <i data-lucide="key"></i>
-            <input type="password" id="auth-confirm-password" class="has-toggle" placeholder="Confirm Password">
-            <button type="button" class="password-toggle-btn" data-target="auth-confirm-password" aria-label="Toggle password visibility">
-              <i data-lucide="eye"></i>
-            </button>
-          </div>
-          <div class="input-group date-group signup-only">
-            <i data-lucide="calendar"></i>
-            <input type="date" id="auth-dob" required="">
-          </div>
-          <div class="signup-only two-factor-preference-container" style="width: 100%; margin-bottom: 12px;">
-            <div class="two-factor-label">Preferred 2FA OTP Method</div>
-            <div class="two-factor-toggle-buttons">
-              <button type="button" class="two-factor-opt-btn active" id="pref-2fa-email" data-preference="email">
-                <i data-lucide="mail"></i> Email
+
+          <!-- STEP 2: LIVE WEBCAM CAMERA -->
+          <div id="onboard-step-2" class="onboard-step" style="display: none;">
+            <div class="webcam-circle-container">
+              <video id="live-webcam-video" autoplay playsinline muted></video>
+              <img id="live-photo-preview" style="display: none;" alt="Live Photo Snapshot">
+              <canvas id="live-webcam-canvas" style="display: none;"></canvas>
+            </div>
+            <p id="webcam-status-msg" class="webcam-status-text">Click "Snap Photo" when ready</p>
+
+            <div class="webcam-btn-row">
+              <button id="btn-snap-photo" class="welcome-btn btn-primary onboard-btn">
+                <i data-lucide="camera"></i> Snap Photo
               </button>
-              <button type="button" class="two-factor-opt-btn" id="pref-2fa-sms" data-preference="sms">
-                <i data-lucide="message-square"></i> SMS
+              <button id="btn-retake-photo" class="welcome-btn btn-secondary onboard-btn" style="display: none;">
+                <i data-lucide="refresh-cw"></i> Retake
+              </button>
+              <button id="btn-finish-onboard" class="welcome-btn btn-primary onboard-btn" style="display: none;">
+                <i data-lucide="arrow-right"></i> Enter Hi-Hubble
               </button>
             </div>
           </div>
-          <div class="checkbox-group signup-only">
-            <div class="custom-checkbox" id="age-checkbox">
-              <i data-lucide="check"></i>
-            </div>
-            <label>Yes, I am over 18 years old.</label>
-          </div>
-          <p id="age-warning" class="age-warning signup-only">You must be at least 18 years old.</p>
-          <button type="submit" id="create-account-btn" class="auth-submit-btn" disabled="">Create Account</button>
-        </form>
-        <div class="auth-footer">
-          <span id="auth-toggle-text">Already have an account?</span> <a href="#" id="auth-toggle-btn">Sign In</a><br>
-          <span class="signup-only">By signing up, you agree to our <a href="#">Terms</a> and <a href="#">Privacy
-              Policy</a></span>
+
         </div>
       </div>
     </div>
