@@ -6231,150 +6231,126 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- USER PROFILE LOADER SYSTEM ---
   async function loadUserProfile(userId) {
-    const token = localStorage.getItem('invibe_jwt_token');
     const currentUserStr = localStorage.getItem('invibeUser');
-    if (!token || !currentUserStr) return;
+    if (!currentUserStr) return;
     const currentUser = JSON.parse(currentUserStr);
-    const isMe = (userId === currentUser.id || userId === currentUser._id || userId === 'me');
+    const localPhoto = localStorage.getItem('invibeProfileImage');
+    const isMe = (!userId || userId === 'me' || userId === currentUser.id || userId === currentUser._id || userId === currentUser.username);
 
-    // Immediately reset UI to show loading state and prevent showing stale profile of the previous user
+    // Immediately set UI to user's profile info (no loading placeholders)
     const profileAvatar = document.querySelector('.profile-screen-avatar');
-    if (profileAvatar) profileAvatar.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
+    if (profileAvatar) profileAvatar.src = (isMe && localPhoto) ? localPhoto : (localPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80');
 
     const profileName = document.querySelector('.profile-summary-top h3');
-    if (profileName) profileName.innerHTML = 'Loading Profile...';
+    if (profileName) profileName.innerHTML = isMe ? (currentUser.fullName || currentUser.username) : 'Hubber Profile';
 
     const profileHandle = document.querySelector('.profile-screen-handle');
-    if (profileHandle) profileHandle.textContent = '@...';
+    if (profileHandle) profileHandle.textContent = '@' + (isMe ? (currentUser.username || 'user') : (userId || 'user'));
 
+    const profileBio = document.getElementById('profile-bio-text');
+    if (profileBio) profileBio.textContent = 'Hubber creator on Hi-Hubble 🚀';
+
+    const followBtn = document.getElementById('profile-follow-btn');
+    const optionsList = document.querySelector('.profile-options-list');
+    const logoutBtn = document.getElementById('profile-logout-btn');
+
+    if (isMe) {
+      if (followBtn) followBtn.style.display = 'none';
+      if (optionsList) optionsList.style.display = 'grid';
+      if (logoutBtn) logoutBtn.style.display = 'block';
+    }
+
+    let user = {
+      _id: isMe ? (currentUser.id || currentUser._id || 'me') : userId,
+      username: isMe ? (currentUser.username || 'haribol') : (userId || 'user'),
+      fullName: isMe ? (currentUser.fullName || currentUser.username || 'haribol') : (userId || 'user'),
+      profileImage: (isMe && localPhoto) ? localPhoto : (localPhoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80'),
+      bio: 'Hubber creator on Hi-Hubble 🚀',
+      followersCount: 0,
+      followingCount: 0
+    };
+
+    let posts = JSON.parse(localStorage.getItem('invibe_custom_posts') || '[]');
+    let reels = [];
+
+    // Try fetching remote API if available
+    try {
+      const token = localStorage.getItem('invibe_jwt_token');
+      const targetId = isMe ? (currentUser.id || currentUser._id) : userId;
+      if (token && targetId) {
+        const res = await fetch(`${API_URL}/api/users/${targetId}/profile`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) user = { ...user, ...data.user };
+          if (data.posts) posts = [...posts, ...data.posts];
+          if (data.reels) reels = data.reels;
+        }
+      }
+    } catch (netErr) {
+      console.warn("Network profile load notice:", netErr.message);
+    }
+
+    // Update follow statistics
     const followersCount = document.getElementById('profile-followers-count');
     const followingCount = document.getElementById('profile-following-count');
     const vibesCount = document.getElementById('profile-vibes-count');
-    if (followersCount) followersCount.textContent = '...';
-    if (followingCount) followingCount.textContent = '...';
-    if (vibesCount) vibesCount.textContent = '...';
+    if (followersCount) followersCount.textContent = formatCount(user.followersCount || 0);
+    if (followingCount) followingCount.textContent = formatCount(user.followingCount || 0);
+    if (vibesCount) vibesCount.textContent = posts ? posts.length : 0;
 
+    // Render posts grid (Vibes Gallery)
     const vibesGrid = document.getElementById('profile-vibes-grid');
-    if (vibesGrid) vibesGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px;">Loading hubs... 📸</div>';
-
-    const reelsGrid = document.getElementById('profile-reels-grid');
-    if (reelsGrid) reelsGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px;">Loading reels... 🎥</div>';
-
-    try {
-      const targetId = isMe ? (currentUser.id || currentUser._id) : userId;
-      const res = await fetch(`${API_URL}/api/users/${targetId}/profile`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error('Failed to load profile');
-      const data = await res.json();
-
-      const user = data.user;
-      const posts = data.posts;
-      const reels = data.reels;
-
-      // Update profile info elements
-      const profileAvatar = document.querySelector('.profile-screen-avatar');
-      if (profileAvatar) profileAvatar.src = user.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
-
-      const profileName = document.querySelector('.profile-summary-top h3');
-      if (profileName) {
-        profileName.innerHTML = user.fullName;
-      }
-
-      const profileHandle = document.querySelector('.profile-screen-handle');
-      if (profileHandle) profileHandle.textContent = '@' + user.username;
-
-      const profileBio = document.getElementById('profile-bio-text');
-      if (profileBio) profileBio.textContent = user.bio || '';
-
-      // Update follow statistics
-      const followersCount = document.getElementById('profile-followers-count');
-      const followingCount = document.getElementById('profile-following-count');
-      const vibesCount = document.getElementById('profile-vibes-count');
-      if (followersCount) followersCount.textContent = formatCount(user.followersCount);
-      if (followingCount) followingCount.textContent = formatCount(user.followingCount);
-      if (vibesCount) vibesCount.textContent = posts.length;
-
-      // Toggle buttons depending on if viewing self or other creators
-      const followBtn = document.getElementById('profile-follow-btn');
-      const optionsList = document.querySelector('.profile-options-list');
-      const logoutBtn = document.getElementById('profile-logout-btn');
-
-      if (isMe) {
-        if (followBtn) followBtn.style.display = 'none';
-        if (optionsList) optionsList.style.display = 'grid';
-        if (logoutBtn) logoutBtn.style.display = 'block';
+    if (vibesGrid) {
+      vibesGrid.innerHTML = '';
+      if (!posts || posts.length === 0) {
+        vibesGrid.innerHTML = '<div class="profile-grid-empty">No hubs shared yet. 📸</div>';
       } else {
-        if (followBtn) {
-          followBtn.style.display = 'block';
-          followBtn.setAttribute('data-user-id', user._id);
-          if (user.isFollowing) {
-            followBtn.classList.add('followed');
-            followBtn.textContent = 'Hubbies';
-          } else {
-            followBtn.classList.remove('followed');
-            followBtn.textContent = 'Follow';
-          }
-        }
-        if (optionsList) optionsList.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-      }
-
-      // Render posts grid (Vibes Gallery)
-      const vibesGrid = document.getElementById('profile-vibes-grid');
-      if (vibesGrid) {
-        vibesGrid.innerHTML = '';
-        if (posts.length === 0) {
-          vibesGrid.innerHTML = '<div class="profile-grid-empty">No hubs shared yet. 📸</div>';
-        } else {
-          posts.forEach(post => {
-            const item = document.createElement('div');
-            item.className = 'profile-grid-item';
-            item.style.cursor = 'pointer';
-            item.innerHTML = `
-              <img src="${post.mediaUrl}" alt="Hub" />
-              <div class="profile-grid-item-overlay">
-                <span><i data-lucide="heart"></i> ${post.likes.length}</span>
-                <span><i data-lucide="message-square"></i> ${post.comments.length}</span>
-              </div>
-            `;
-            item.addEventListener('click', () => {
-              openProfilePostViewer(post);
-            });
-            vibesGrid.appendChild(item);
+        posts.forEach(post => {
+          const item = document.createElement('div');
+          item.className = 'profile-grid-item';
+          item.style.cursor = 'pointer';
+          item.innerHTML = `
+            <img src="${post.mediaUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'}" alt="Hub" />
+            <div class="profile-grid-item-overlay">
+              <span><i data-lucide="heart"></i> ${(post.likes || []).length}</span>
+              <span><i data-lucide="message-square"></i> ${(post.comments || []).length}</span>
+            </div>
+          `;
+          item.addEventListener('click', () => {
+            openProfilePostViewer(post);
           });
-        }
+          vibesGrid.appendChild(item);
+        });
       }
-
-      // Render reels grid (Reels Gallery)
-      const reelsGrid = document.getElementById('profile-reels-grid');
-      if (reelsGrid) {
-        reelsGrid.innerHTML = '';
-        if (reels.length === 0) {
-          reelsGrid.innerHTML = '<div class="profile-grid-empty">No reels uploaded yet. 🎥</div>';
-        } else {
-          reels.forEach(reel => {
-            const item = document.createElement('div');
-            item.className = 'profile-grid-item';
-            item.innerHTML = `
-              <video src="${reel.videoUrl}" muted loop></video>
-              <div class="profile-grid-item-overlay">
-                <span><i data-lucide="heart"></i> ${reel.likes.length}</span>
-              </div>
-            `;
-            const video = item.querySelector('video');
-            item.addEventListener('mouseenter', () => video.play());
-            item.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
-            reelsGrid.appendChild(item);
-          });
-        }
-      }
-
-      debouncedCreateIcons();
-    } catch (err) {
-      console.error(err);
-      showToast('Error loading user profile.');
     }
+
+    // Render reels grid (Reels Gallery)
+    const reelsGrid = document.getElementById('profile-reels-grid');
+    if (reelsGrid) {
+      reelsGrid.innerHTML = '';
+      if (!reels || reels.length === 0) {
+        reelsGrid.innerHTML = '<div class="profile-grid-empty">No reels uploaded yet. 🎥</div>';
+      } else {
+        reels.forEach(reel => {
+          const item = document.createElement('div');
+          item.className = 'profile-grid-item';
+          item.innerHTML = `
+            <video src="${reel.videoUrl}" muted loop></video>
+            <div class="profile-grid-item-overlay">
+              <span><i data-lucide="heart"></i> ${(reel.likes || []).length}</span>
+            </div>
+          `;
+          const video = item.querySelector('video');
+          item.addEventListener('mouseenter', () => video.play());
+          item.addEventListener('mouseleave', () => { video.pause(); video.currentTime = 0; });
+          reelsGrid.appendChild(item);
+        });
+      }
+    }
+
+    debouncedCreateIcons();
   }
 
   // --- PROFILE POST VIEWER MODAL SYSTEM (CHANGE 1) ---
