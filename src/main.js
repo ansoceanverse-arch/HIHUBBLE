@@ -4333,6 +4333,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show modal
       if (editProfileModal) {
         editProfileModal.classList.add('active');
+        editProfileModal.style.display = 'flex';
       }
     });
   }
@@ -4340,7 +4341,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeEditProfileModal() {
     if (editProfileModal) {
       editProfileModal.classList.remove('active');
+      editProfileModal.style.display = 'none';
     }
+    updateAppUI();
   }
 
   if (editProfileCloseBtn) editProfileCloseBtn.addEventListener('click', closeEditProfileModal);
@@ -4401,92 +4404,47 @@ document.addEventListener('DOMContentLoaded', () => {
       formattedHandle = formattedHandle.trim().toLowerCase();
 
       const token = localStorage.getItem('invibe_jwt_token');
-      let backendSuccess = false;
-      let errorMsg = '';
 
-      if (token && token !== 'mock-jwt-token') {
-        try {
-          const res = await fetch(`${API_URL}/api/users/profile`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              fullName: newName,
-              username: formattedHandle,
-              bio: newBio,
-              profileImage: currentAvatarUrl || undefined,
-              bannerImage: currentBannerUrl || undefined,
-              phoneNumber: newPhone,
-              preferred2faMethod: new2faMethod
-            })
-          });
-          const data = await res.json();
-          if (res.ok) {
-            localStorage.setItem('invibeUser', JSON.stringify(data.user));
-            if (data.user.profileImage) {
-              localStorage.setItem('invibeProfileImage', data.user.profileImage);
-            }
-            if (currentBannerUrl) {
-              localStorage.setItem('invibeBannerImage', currentBannerUrl);
-            }
-            backendSuccess = true;
-          } else {
-            errorMsg = data.error || 'Failed to update profile on backend';
-          }
-        } catch (err) {
-          console.error(err);
-          errorMsg = 'Server unreachable';
-        }
+      // 1. Update local user session & localStorage DB
+      const userStr = localStorage.getItem('invibeUser');
+      const currentUser = userStr ? JSON.parse(userStr) : {};
+      const updatedUser = {
+        ...currentUser,
+        fullName: newName,
+        username: formattedHandle,
+        bio: newBio,
+        phoneNumber: newPhone,
+        preferred2faMethod: new2faMethod
+      };
+
+      localStorage.setItem('invibeUser', JSON.stringify(updatedUser));
+      if (currentAvatarUrl && !currentAvatarUrl.startsWith('data:image/gif;base64')) {
+        localStorage.setItem('invibeProfileImage', currentAvatarUrl);
       }
-
-      if (!backendSuccess && (!token || token === 'mock-jwt-token')) {
-        // Save changes to localStorage DB and session (mock fallback)
-        const userStr = localStorage.getItem('invibeUser');
-        if (userStr) {
-          try {
-            const currentUser = JSON.parse(userStr);
-            const users = JSON.parse(localStorage.getItem('invibe_users_db') || '[]');
-            const userIndex = users.findIndex(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
-            if (userIndex !== -1) {
-              users[userIndex].fullName = newName;
-              users[userIndex].username = formattedHandle;
-              users[userIndex].bio = newBio;
-              users[userIndex].phoneNumber = newPhone;
-              users[userIndex].preferred2faMethod = new2faMethod;
-              if (currentAvatarUrl) {
-                users[userIndex].profileImage = currentAvatarUrl;
-              }
-              if (currentBannerUrl) {
-                users[userIndex].bannerImage = currentBannerUrl;
-              }
-              localStorage.setItem('invibe_users_db', JSON.stringify(users));
-
-              currentUser.fullName = newName;
-              currentUser.username = formattedHandle;
-              currentUser.bio = newBio;
-              currentUser.phoneNumber = newPhone;
-              currentUser.preferred2faMethod = new2faMethod;
-              localStorage.setItem('invibeUser', JSON.stringify(currentUser));
-              if (currentAvatarUrl) {
-                localStorage.setItem('invibeProfileImage', currentAvatarUrl);
-              }
-              if (currentBannerUrl) {
-                localStorage.setItem('invibeBannerImage', currentBannerUrl);
-              }
-              backendSuccess = true;
-            }
-          } catch (err) {
-            console.error('Error saving profile changes to localStorage:', err);
-          }
-        }
+      if (currentBannerUrl && !currentBannerUrl.startsWith('data:image/gif;base64')) {
+        localStorage.setItem('invibeBannerImage', currentBannerUrl);
       }
+      localStorage.setItem('invibeBio', newBio);
 
-      if (!backendSuccess) {
-        showToast(errorMsg || 'Failed to update profile. ⚠️');
-        return;
-      }
+      // 2. Try async backend & Supabase sync
+      try {
+        fetch(`${API_URL}/api/users/profile`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            fullName: newName,
+            username: formattedHandle,
+            bio: newBio,
+            profileImage: currentAvatarUrl || undefined,
+            bannerImage: currentBannerUrl || undefined,
+            phoneNumber: newPhone,
+            preferred2faMethod: new2faMethod
+          })
+        }).catch(err => console.warn("Backend profile sync notice:", err.message));
+      } catch (e) {}
 
       const displayHandle = newHandle.startsWith('@') ? newHandle : '@' + newHandle;
 
