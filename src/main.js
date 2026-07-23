@@ -1185,6 +1185,8 @@ document.addEventListener('DOMContentLoaded', () => {
     createPostCaption.addEventListener('input', updateSubmitButtonState);
   }
 
+  let selectedPostMediaBlobUrl = null;
+
   if (createPostFileInput) {
     createPostFileInput.addEventListener('change', () => {
       if (createPostFileInput.files.length > 0) {
@@ -1192,22 +1194,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const isVideo = file.type.startsWith('video/');
         selectedPostMediaType = isVideo ? 'video' : 'image';
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          selectedPostMediaBase64 = e.target.result;
+        if (isVideo) {
+          if (selectedPostMediaBlobUrl) {
+            try { URL.revokeObjectURL(selectedPostMediaBlobUrl); } catch (e) {}
+          }
+          selectedPostMediaBlobUrl = URL.createObjectURL(file);
+          selectedPostMediaBase64 = selectedPostMediaBlobUrl;
+
           createPostPreviewContainer.style.display = 'block';
-          if (isVideo) {
-            createPostPreviewImg.style.display = 'none';
-            createPostPreviewVideo.style.display = 'block';
-            createPostPreviewVideo.src = selectedPostMediaBase64;
-          } else {
+          createPostPreviewImg.style.display = 'none';
+          createPostPreviewVideo.style.display = 'block';
+          createPostPreviewVideo.controls = true;
+          createPostPreviewVideo.src = selectedPostMediaBlobUrl;
+          updateSubmitButtonState();
+        } else {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            selectedPostMediaBase64 = e.target.result;
+            createPostPreviewContainer.style.display = 'block';
             createPostPreviewVideo.style.display = 'none';
             createPostPreviewImg.style.display = 'block';
             createPostPreviewImg.src = selectedPostMediaBase64;
-          }
-          updateSubmitButtonState();
-        };
-        reader.readAsDataURL(file);
+            updateSubmitButtonState();
+          };
+          reader.readAsDataURL(file);
+        }
       }
     });
   }
@@ -1215,6 +1226,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (createPostRemoveBtn) {
     createPostRemoveBtn.addEventListener('click', () => {
       createPostFileInput.value = '';
+      if (selectedPostMediaBlobUrl) {
+        try { URL.revokeObjectURL(selectedPostMediaBlobUrl); } catch (e) {}
+        selectedPostMediaBlobUrl = null;
+      }
       selectedPostMediaBase64 = null;
       createPostPreviewContainer.style.display = 'none';
       createPostPreviewImg.src = '';
@@ -1246,7 +1261,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentUserStr = localStorage.getItem('invibeUser');
         const currentUser = currentUserStr ? JSON.parse(currentUserStr) : { username: 'qewre', fullName: 'qewre' };
         const userPhoto = localStorage.getItem('invibeProfileImage') || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
-        const mediaUrl = selectedPostMediaBase64 || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
+        const mediaUrl = selectedPostMediaBlobUrl || selectedPostMediaBase64 || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
         const mediaType = selectedPostMediaType || 'image';
 
         const newPostObj = {
@@ -1265,10 +1280,26 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         };
 
-        // Store post locally
-        const localPosts = JSON.parse(localStorage.getItem('invibe_custom_posts') || '[]');
-        localPosts.unshift(newPostObj);
-        localStorage.setItem('invibe_custom_posts', JSON.stringify(localPosts));
+        // In-memory array for high timeline video posts
+        window.invibe_memory_posts = window.invibe_memory_posts || [];
+        window.invibe_memory_posts.unshift(newPostObj);
+
+        // Store post locally with quota protection
+        try {
+          const localPosts = JSON.parse(localStorage.getItem('invibe_custom_posts') || '[]');
+          localPosts.unshift(newPostObj);
+          localStorage.setItem('invibe_custom_posts', JSON.stringify(localPosts));
+        } catch (quotaErr) {
+          console.warn("Storage quota notice (large video file):", quotaErr.message);
+          // Retain lightweight entries if quota exceeded
+          try {
+            const lightPosts = (JSON.parse(localStorage.getItem('invibe_custom_posts') || '[]'))
+              .slice(0, 5)
+              .map(p => p.mediaType === 'video' ? { ...p, mediaUrl: '' } : p);
+            lightPosts.unshift({ ...newPostObj, mediaUrl: '' });
+            localStorage.setItem('invibe_custom_posts', JSON.stringify(lightPosts));
+          } catch (e) {}
+        }
 
         // Try backend network call asynchronously if backend is online
         try {
@@ -1291,6 +1322,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset fields
         createPostCaption.value = '';
         if (createPostFileInput) createPostFileInput.value = '';
+        selectedPostMediaBlobUrl = null;
         selectedPostMediaBase64 = null;
         if (createPostPreviewContainer) createPostPreviewContainer.style.display = 'none';
         if (createPostPreviewImg) createPostPreviewImg.src = '';
@@ -5047,28 +5079,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  document.addEventListener('click', (e) => {
-    const commentBtn = e.target.closest('.comment-btn-action');
-    if (commentBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const pid = commentBtn.getAttribute('data-post-id') || commentBtn.closest('[data-post-id]')?.getAttribute('data-post-id') || '1';
-      const card = commentBtn.closest('.feed-card');
-      const inlineInput = card ? card.querySelector('.comment-input-field') : null;
-
-      if (inlineInput) {
-        inlineInput.focus();
-        inlineInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else if (commentsModal) {
-        currentCommentPostId = pid;
-        commentsModal.classList.add('active');
-        const inputField = commentsModal.querySelector('input');
-        if (inputField) inputField.focus();
-      }
-    }
-  });
-
   // Share trigger click
   document.addEventListener('click', async (e) => {
     const shareBtn = e.target.closest('.share-btn-action, .share-btn, .feed-share-btn');
@@ -5079,14 +5089,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = shareBtn.closest('.feed-card');
       const postId = shareBtn.getAttribute('data-post-id') || card?.getAttribute('data-post-id') || card?.id?.replace('post-', '') || '1';
 
-      // Look for a local feed-share-modal first, otherwise use the global shareModal
       const localModal = card?.querySelector('.feed-share-modal') || document.getElementById('share-modal');
 
       openShare('post_' + postId, localModal);
     }
   });
 
-  // ─── LIVE MONGO DATABASE SYSTEMS INTEGRATION ───
+  // ─── LIVE DATABASE & FEED POSTS INTEGRATION ───
 
   async function loadFeedPosts() {
     const feedContainer = document.getElementById('home-feed-posts');
@@ -5102,12 +5111,19 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn("API loadFeedPosts notice:", err.message);
     }
 
+    const memoryPosts = window.invibe_memory_posts || [];
     const localPosts = JSON.parse(localStorage.getItem('invibe_custom_posts') || '[]');
-    posts = [...localPosts, ...posts];
+    
+    const combinedMap = new Map();
+    memoryPosts.forEach(p => combinedMap.set(p._id, p));
+    localPosts.forEach(p => { if (!combinedMap.has(p._id)) combinedMap.set(p._id, p); });
+    posts.forEach(p => { if (!combinedMap.has(p._id)) combinedMap.set(p._id, p); });
+
+    posts = Array.from(combinedMap.values());
 
     if (posts.length === 0) {
       const currentUserStr = localStorage.getItem('invibeUser');
-      const currentUser = currentUserStr ? JSON.parse(currentUserStr) : { username: 'qewre' };
+      const currentUser = currentUserStr ? JSON.parse(currentUserStr) : { username: 'haribol' };
       const currentPhoto = localStorage.getItem('invibeProfileImage') || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
 
       posts = [{
@@ -5119,9 +5135,9 @@ document.addEventListener('DOMContentLoaded', () => {
         likes: [],
         comments: [],
         author: {
-          _id: 'usr_' + (currentUser.username || 'qewre'),
-          username: currentUser.username || 'qewre',
-          fullName: currentUser.username || 'qewre',
+          _id: 'usr_' + (currentUser.username || 'haribol'),
+          username: currentUser.username || 'haribol',
+          fullName: currentUser.username || 'haribol',
           profileImage: currentPhoto
         }
       }];
@@ -5137,75 +5153,72 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentUserStr = localStorage.getItem('invibeUser');
     const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
 
-      posts.forEach(post => {
-        const isLikedByMe = currentUser ? post.likes.includes(currentUser.id) : false;
+    posts.forEach(post => {
+      const isLikedByMe = currentUser ? (post.likes || []).includes(currentUser.id) : false;
 
-        const card = document.createElement('article');
-        card.className = 'feed-card';
-        card.id = `post-${post._id}`;
-        card.setAttribute('data-tags', 'all chill');
+      const card = document.createElement('article');
+      card.className = 'feed-card';
+      card.id = `post-${post._id}`;
+      card.setAttribute('data-tags', 'all chill');
 
-        let commentsHTML = '';
-        post.comments.forEach(comment => {
-          commentsHTML += `
-            <div class="comment-item" style="display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px;">
-              <img src="${comment.author.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80'}" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
-              <div>
-                <strong style="color: var(--text-color); margin-right: 4px;">${comment.author.username}</strong>
-                <span style="color: var(--text-muted);">${comment.text}</span>
-              </div>
+      let commentsHTML = '';
+      (post.comments || []).forEach(comment => {
+        commentsHTML += `
+          <div class="comment-item" style="display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px;">
+            <img src="${comment.author.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80'}" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
+            <div>
+              <strong style="color: var(--text-color); margin-right: 4px;">${comment.author.username}</strong>
+              <span style="color: var(--text-muted);">${comment.text}</span>
             </div>
-          `;
-        });
-
-        card.innerHTML = `
-          <div class="post-header">
-            <div class="post-author-info">
-              <img src="${post.author.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80'}" alt="${post.author.fullName}" class="author-avatar" />
-              <div>
-                <h4 class="author-name">${post.author.fullName}</h4>
-                <div class="post-meta">
-                  <span class="post-time">${new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span class="dot-separator">•</span>
-                  <i data-lucide="globe" class="meta-icon"></i>
-                </div>
-              </div>
-            </div>
-            <button class="post-options-btn"><i data-lucide="more-horizontal"></i></button>
           </div>
+        `;
+      });
 
-          <div class="post-media-container" style="position:relative; overflow:hidden; border-radius: 12px; margin: 12px 0;">
-            ${post.mediaType === 'video'
-            ? `<video src="${post.mediaUrl}" loop muted playsinline style="width:100%; border-radius:12px; display:block;" class="post-media-video"></video>
-                 <div class="video-play-overlay">
-                   <button class="play-btn-big"><i data-lucide="play"></i></button>
-                 </div>
-                 <div class="video-mute-container" style="position: absolute; left: 16px; bottom: 24px; z-index: 12;">
-                   <button class="action-circle-btn mute-btn-action" data-post-id="${post._id}">
-                     <i data-lucide="volume-2"></i>
-                   </button>
-                 </div>`
-            : `<img src="${post.mediaUrl}" alt="Post Media" style="width:100%; border-radius:12px; display:block;" />`
-          }
-
-            <!-- Vertical engagement overlay right aligned -->
-            <div class="post-engagement-actions">
-              <div class="engagement-item like-btn-action ${isLikedByMe ? 'liked' : ''}" data-post-id="${post._id}">
-                <button class="action-circle-btn heart-btn"><i data-lucide="heart" style="${isLikedByMe ? 'fill:#8b5cf6; stroke:#8b5cf6;' : ''}"></i></button>
-                <span class="action-count">${post.likes.length}</span>
-              </div>
-              <div class="engagement-item comment-btn-action" data-post-id="${post._id}">
-                <button class="action-circle-btn"><i data-lucide="message-circle"></i></button>
-                <span class="action-count">${post.comments.length}</span>
-              </div>
-              <div class="engagement-item share-btn-action" data-post-id="${post._id}">
-                <button class="action-circle-btn"><i data-lucide="send"></i></button>
-              </div>
-              <div class="engagement-item bookmark-btn-action" data-post-id="${post._id}">
-                <button class="action-circle-btn bookmark-btn"><i data-lucide="bookmark"></i></button>
+      card.innerHTML = `
+        <div class="post-header">
+          <div class="post-author-info">
+            <img src="${post.author.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80'}" alt="${post.author.fullName}" class="author-avatar" />
+            <div>
+              <h4 class="author-name">${post.author.fullName}</h4>
+              <div class="post-meta">
+                <span class="post-time">${new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span class="dot-separator">•</span>
+                <i data-lucide="globe" class="meta-icon"></i>
               </div>
             </div>
           </div>
+          <button class="post-options-btn"><i data-lucide="more-horizontal"></i></button>
+        </div>
+
+        <div class="post-media-container" style="position:relative; overflow:hidden; border-radius: 12px; margin: 12px 0;">
+          ${post.mediaType === 'video'
+          ? `<video src="${post.mediaUrl}" controls loop muted playsinline style="width:100%; max-height:600px; border-radius:12px; display:block;" class="post-media-video"></video>
+               <div class="video-mute-container" style="position: absolute; left: 16px; bottom: 48px; z-index: 12;">
+                 <button class="action-circle-btn mute-btn-action" data-post-id="${post._id}">
+                   <i data-lucide="volume-2"></i>
+                 </button>
+               </div>`
+          : `<img src="${post.mediaUrl}" alt="Post Media" style="width:100%; border-radius:12px; display:block;" />`
+        }
+
+          <!-- Vertical engagement overlay right aligned -->
+          <div class="post-engagement-actions">
+            <div class="engagement-item like-btn-action ${isLikedByMe ? 'liked' : ''}" data-post-id="${post._id}">
+              <button class="action-circle-btn heart-btn"><i data-lucide="heart" style="${isLikedByMe ? 'fill:#8b5cf6; stroke:#8b5cf6;' : ''}"></i></button>
+              <span class="action-count">${(post.likes || []).length}</span>
+            </div>
+            <div class="engagement-item comment-btn-action" data-post-id="${post._id}">
+              <button class="action-circle-btn"><i data-lucide="message-circle"></i></button>
+              <span class="action-count">${(post.comments || []).length}</span>
+            </div>
+            <div class="engagement-item share-btn-action" data-post-id="${post._id}">
+              <button class="action-circle-btn"><i data-lucide="send"></i></button>
+            </div>
+            <div class="engagement-item bookmark-btn-action" data-post-id="${post._id}">
+              <button class="action-circle-btn bookmark-btn"><i data-lucide="bookmark"></i></button>
+            </div>
+          </div>
+        </div>
 
           <div class="post-details">
             <p class="post-caption"><strong class="author-username" style="margin-right: 8px;">${post.author.username}</strong>${post.caption}</p>
