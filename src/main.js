@@ -1,6 +1,6 @@
 import './style.css'
 import './auth.css'
-import { initAuth } from './auth.js'
+import { initAuth, updateAppUI } from './auth.js'
 
 document.addEventListener('DOMContentLoaded', () => {
   const API_URL = (
@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
   window.savedHubbs = window.savedHubbs || [];
 
   initAuth();
+  updateAppUI();
+  window.addEventListener('auth-changed', updateAppUI);
 
   // Initialize Lucide Icons (Debounced for performance)
   let iconRenderQueued = false;

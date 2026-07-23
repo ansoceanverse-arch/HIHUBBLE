@@ -229,6 +229,10 @@ export function updateAppUI() {
   const sidebarUsername = document.querySelector('.profile-preview-info p');
   if (sidebarUsername && user.username) sidebarUsername.textContent = '@' + user.username;
 
+  // Create post card avatar
+  const createPostAvatar = document.getElementById('create-post-user-avatar');
+  if (createPostAvatar && profileImage) createPostAvatar.src = profileImage;
+
   // Stories "Your Vibe" avatar
   const storyAvatar = document.querySelector('.story-card.current-user .story-avatar-container img');
   if (storyAvatar && profileImage) storyAvatar.src = profileImage;
