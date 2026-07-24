@@ -1,0 +1,94 @@
+﻿.post-caption {
+.reel-caption {
+.upload-badge-btn {
+.upload-badge-btn:hover {
+.fallback-upload-btn {
+#view-create-hubbs {
+.create-hubbs-scroll-area {
+#view-create-hubbs.active {
+.create-hubbs-header {
+.create-hubbs-header h2 {
+.create-hubbs-header p {
+.create-hubbs-layout {
+.ch-panel {
+.ch-center-panel {
+.ch-panel-title {
+.ch-upload-box {
+.ch-upload-box:hover {
+.ch-upload-option {
+.ch-icon-circle {
+.ch-option-title {
+.ch-option-subtitle {
+.ch-divider {
+.ch-divider span {
+.ch-supported-formats {
+.ch-media-preview-row {
+.ch-preview-item {
+.ch-preview-item img {
+.ch-remove-media {
+.ch-remove-media:hover {
+.ch-remove-media i {
+.ch-add-more-media {
+.ch-add-more-media:hover {
+.ch-drag-hint {
+.ch-image-tools {
+.ch-tool-btn {
+.ch-tool-btn:hover {
+.ch-tool-btn.active {
+.ch-tool-btn i {
+.ch-field-label {
+.ch-dropdown-box {
+.ch-caption-input-wrapper {
+.ch-caption-input-wrapper textarea {
+.ch-emoji-btn {
+.ch-emoji-btn:hover {
+.ch-dropdown {
+.ch-dropdown:hover {
+.ch-hub-selector {
+.ch-selected-hubs {
+.ch-hub-tag {
+.ch-hub-tag i {
+.ch-hub-tag i:hover {
+.ch-setting-row {
+.ch-setting-label {
+.ch-switch {
+.ch-switch input {
+.ch-slider {
+.ch-slider:before {
+.ch-datetime-row {
+.ch-time-input {
+.ch-input-with-icon {
+.ch-input-with-icon input {
+.ch-input-with-icon i {
+.ch-invite-box {
+.ch-invited-user {
+.ch-invited-user img {
+.ch-invited-user span {
+.ch-add-collab-btn {
+.ch-add-collab-btn:hover {
+.ch-drafts-header {
+.ch-drafts-count {
+.ch-drafts-list {
+.ch-draft-item {
+.ch-draft-item:hover {
+.ch-draft-item img {
+.ch-draft-info {
+.ch-draft-title {
+.ch-draft-time {
+.ch-see-all-drafts {
+.ch-see-all-drafts:hover {
+.ch-bottom-bar {
+.ch-bottom-bar-right {
+.ch-bottom-bar-center {
+.ch-next-btn {
+.ch-save-draft-btn {
+.ch-save-draft-btn:hover {
+.ch-next-btn:hover {
+.ch-btn-text {
+.ch-btn-title {
+.ch-btn-subtitle {
+.ch-right-panel {
+.ch-next-btn:active {
+.ch-back-btn:hover {
+.ch-back-btn:active {
+.ch-back-btn {

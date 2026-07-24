@@ -8208,37 +8208,43 @@ body.review-hubbs-view-active .main-content {
    ========================================================================= */
 
 /* 1. BUTTON REFINEMENT */
+.btn-primary,
+.ch-next-btn,
+.welcome-btn.btn-primary {
+  border-radius: 20px !important;
+}
+
 .ch-save-draft-btn,
 .ch-next-btn,
 .icon-btn.back-btn,
 .ch-back-btn,
 .review-header-left .ch-save-draft-btn {
-  border-radius: 24px !important;
-  padding: 14px 36px !important;
-  height: auto !important;
-  min-height: 52px !important;
+  border-radius: 20px !important;
+  padding: 12px 32px !important;
+  height: 48px !important;
+  min-height: 48px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 12px !important;
+  gap: 10px !important;
   transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Secondary Button (Save Draft / Previous) */
 .ch-save-draft-btn, .ch-back-btn, .icon-btn.back-btn {
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: white !important;
 }
 
 .ch-save-draft-btn:hover, .ch-back-btn:hover, .icon-btn.back-btn:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  transform: translateY(-1px) scale(1.01) !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255,255,255,0.05) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.08) !important;
 }
 
 .ch-save-draft-btn:active, .ch-back-btn:active, .icon-btn.back-btn:active {
@@ -8247,16 +8253,18 @@ body.review-hubbs-view-active .main-content {
 
 /* Primary Button (Publish / Next) */
 .ch-next-btn {
-  background: linear-gradient(135deg, rgba(108, 59, 255, 0.9), rgba(157, 102, 255, 0.9)) !important;
+  background: linear-gradient(135deg, rgba(108, 59, 255, 0.95), rgba(157, 102, 255, 0.95)) !important;
   backdrop-filter: blur(24px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
 }
 
 .ch-next-btn:hover {
-  background: linear-gradient(135deg, rgba(118, 69, 255, 1), rgba(167, 112, 255, 1)) !important;
-  transform: translateY(-1px) scale(1.02) !important;
+  background: linear-gradient(135deg, rgba(124, 75, 255, 1), rgba(173, 118, 255, 1)) !important;
+  transform: translateY(-2px) scale(1.02) !important;
   box-shadow: 0 12px 32px rgba(108, 59, 255, 0.4), 0 0 24px rgba(108, 59, 255, 0.3) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
 .ch-next-btn:active {
@@ -8269,11 +8277,11 @@ body.review-hubbs-view-active .main-content {
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
-  gap: 2px !important;
+  gap: 1px !important;
 }
 
 .ch-btn-title {
-  font-size: 1.05rem !important;
+  font-size: 1rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.2px !important;
   display: flex !important;
@@ -8282,81 +8290,100 @@ body.review-hubbs-view-active .main-content {
 }
 
 .ch-btn-subtitle {
-  font-size: 0.75rem !important;
+  font-size: 0.72rem !important;
   font-weight: 400 !important;
-  opacity: 0.7 !important;
+  opacity: 0.75 !important;
 }
 
 /* 2. RAW / EDITED LABELS */
 .ba-label {
-  background: rgba(0, 0, 0, 0.25) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 9999px !important;
   padding: 6px 14px !important;
-  font-size: 0.65rem !important;
-  font-weight: 500 !important;
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
   letter-spacing: 1.5px !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
   text-transform: uppercase !important;
 }
 
 /* 3. IMAGE COMPARISON POLISH */
 .ba-slider-container {
-  border-radius: 28px !important;
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(108, 59, 255, 0.2) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(108, 59, 255, 0.25) !important;
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
 .ba-slider-container:hover {
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 0 1.5px rgba(108, 59, 255, 0.4) !important;
+  box-shadow: 0 36px 80px rgba(0, 0, 0, 0.65), 0 0 0 1.5px rgba(108, 59, 255, 0.4) !important;
 }
 
 .ba-handle-line {
-  width: 1.5px !important;
-  background: rgba(255, 255, 255, 0.6) !important;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4) !important;
+  width: 2px !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5) !important;
 }
 
 .ba-handle-circle {
   width: 44px !important;
   height: 44px !important;
-  background: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(8px) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.4) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
   transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
 .ba-slider-handle:hover .ba-handle-circle {
-  transform: scale(1.15) !important;
+  transform: scale(1.12) !important;
   background: rgba(255, 255, 255, 1) !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(108, 59, 255, 0.3) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(108, 59, 255, 0.35) !important;
 }
 
 .ba-slider-handle:active .ba-handle-circle {
   transform: scale(0.95) !important;
-  background: rgba(255, 255, 255, 0.9) !important;
 }
 
-/* 4. CARDS HOVER */
+/* 4. CARDS HOVER AND UNIFORM PADDING */
 .ch-layout-section, .upload-card, .tools-card, .draft-card {
+  padding: 24px !important;
+  border-radius: 20px !important;
   transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
 .ch-layout-section:hover, .upload-card:hover, .tools-card:hover, .draft-card:hover {
   transform: translateY(-2px) !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255,255,255,0.08) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Soft glass aesthetic for header and footer */
-.review-hubbs-header, .create-hubbs-header, .ch-bottom-bar {
-  background: rgba(18, 18, 18, 0.6) !important;
+/* Identical footer height and glass aesthetic across Share HUBBs and Review */
+.review-hubbs-header, .create-hubbs-header {
+  min-height: 72px !important;
+  padding: 16px 40px !important;
+  background: rgba(18, 18, 18, 0.65) !important;
   backdrop-filter: blur(32px) !important;
   -webkit-backdrop-filter: blur(32px) !important;
-  border-color: rgba(255, 255, 255, 0.05) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-sizing: border-box !important;
+}
+
+.ch-bottom-bar {
+  min-height: 72px !important;
+  height: 72px !important;
+  padding: 12px 40px !important;
+  background: rgba(18, 18, 18, 0.65) !important;
+  backdrop-filter: blur(32px) !important;
+  -webkit-backdrop-filter: blur(32px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
 }
 
 /* FINAL UI POLISH PASS */

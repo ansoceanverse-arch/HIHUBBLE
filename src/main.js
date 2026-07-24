@@ -248,6 +248,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (viewName === 'review-hubbs') {
       document.body.classList.add('review-hubbs-view-active');
+      if (typeof window.initBeforeAfterSlider === 'function') {
+        setTimeout(window.initBeforeAfterSlider, 50);
+      }
     } else {
       document.body.classList.remove('review-hubbs-view-active');
     }
@@ -7981,7 +7984,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 // BEFORE / AFTER SLIDER LOGIC
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
+function initBeforeAfterSlider() {
   const container = document.getElementById('ba-slider-container');
   const imageBefore = document.getElementById('ba-image-before');
   const handle = document.getElementById('ba-slider-handle');
@@ -8037,4 +8040,11 @@ document.addEventListener('DOMContentLoaded', () => {
     imageBefore.style.clipPath = `inset(0 50% 0 0)`;
     handle.style.left = `50%`;
   }
-});
+}
+
+window.initBeforeAfterSlider = initBeforeAfterSlider;
+document.addEventListener('DOMContentLoaded', initBeforeAfterSlider);
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  initBeforeAfterSlider();
+}
+
