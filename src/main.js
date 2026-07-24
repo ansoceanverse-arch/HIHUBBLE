@@ -206,6 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const mobileNavItems = document.querySelectorAll('.mobile-nav-btn');
   const appContainer = document.querySelector('.chats-layout-grid');
 
+  window.switchView = switchView; // Expose to global scope for inline onclick
+
   function switchView(viewName, userId) {
     if (!viewName) return;
 
@@ -236,6 +238,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (chatFooter) chatFooter.style.display = 'none';
     } else {
       document.body.classList.remove('chats-view-active');
+    }
+
+    if (viewName === 'create-hubbs') {
+      document.body.classList.add('create-hubbs-view-active');
+    } else {
+      document.body.classList.remove('create-hubbs-view-active');
+    }
+
+    if (viewName === 'review-hubbs') {
+      document.body.classList.add('review-hubbs-view-active');
+    } else {
+      document.body.classList.remove('review-hubbs-view-active');
     }
 
     // Update active view panels
@@ -1137,7 +1151,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (addStoryBtn) {
     addStoryBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (storyFileInput) storyFileInput.click();
+      switchView('create-hubbs');
     });
   }
 
@@ -7962,4 +7976,65 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+});
+
+// ==========================================
+// BEFORE / AFTER SLIDER LOGIC
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.getElementById('ba-slider-container');
+  const imageBefore = document.getElementById('ba-image-before');
+  const handle = document.getElementById('ba-slider-handle');
+
+  if (container && imageBefore && handle) {
+    let isDragging = false;
+
+    const updateSlider = (x) => {
+      const rect = container.getBoundingClientRect();
+      let position = x - rect.left;
+      
+      // Keep within bounds
+      position = Math.max(0, Math.min(position, rect.width));
+      
+      // Calculate percentage
+      const percentage = (position / rect.width) * 100;
+      
+      // Update DOM
+      imageBefore.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+      handle.style.left = `${percentage}%`;
+    };
+
+    // Mouse events
+    handle.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      e.preventDefault(); // Prevent text selection
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      updateSlider(e.clientX);
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Touch events for mobile
+    handle.addEventListener('touchstart', (e) => {
+      isDragging = true;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      updateSlider(e.touches[0].clientX);
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+    
+    // Initial setup (50%)
+    imageBefore.style.clipPath = `inset(0 50% 0 0)`;
+    handle.style.left = `50%`;
+  }
 });
