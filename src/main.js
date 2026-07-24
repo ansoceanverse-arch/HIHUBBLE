@@ -1,6 +1,6 @@
 import './style.css'
 import './auth.css'
-import { initAuth, updateAppUI } from './auth.js'
+import { initAuth, updateAppUI, handleLogout } from './auth.js'
 
 document.addEventListener('DOMContentLoaded', () => {
   const API_URL = (
@@ -20,6 +20,104 @@ document.addEventListener('DOMContentLoaded', () => {
   initAuth();
   updateAppUI();
   window.addEventListener('auth-changed', updateAppUI);
+
+  // Global Logout Handling (Applies to sidebar logout, mobile logout, profile header avatar)
+  document.addEventListener('click', (e) => {
+    const logoutBtn = e.target.closest('#logout-btn, .logout-btn, [data-action="logout"], #header-profile-avatar');
+    if (logoutBtn) {
+      e.preventDefault();
+      if (confirm('Are you sure you want to log out of Hi-Hubble?')) {
+        handleLogout();
+      }
+    }
+  });
+
+  // Global Follow / Unfollow Button Handling
+  document.addEventListener('click', async (e) => {
+    const followBtn = e.target.closest('.btn-follow-user');
+    if (followBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const targetId = followBtn.getAttribute('data-user-id');
+      const targetUsername = followBtn.getAttribute('data-username') || 'user';
+      const token = localStorage.getItem('invibe_jwt_token');
+
+      if (!token) {
+        showToast('Please log in to follow users! 🔐');
+        return;
+      }
+
+      const followingList = JSON.parse(localStorage.getItem('invibe_following_users') || '[]');
+      const pendingList = JSON.parse(localStorage.getItem('invibe_pending_users') || '[]');
+      const isCurrentlyFollowing = followingList.includes(targetId);
+      const isCurrentlyPending = pendingList.includes(targetId);
+
+      followBtn.disabled = true;
+
+      try {
+        const endpoint = (isCurrentlyFollowing || isCurrentlyPending) ? `/api/users/${targetId}/unfollow` : `/api/users/${targetId}/follow`;
+        const res = await fetch(`${API_URL}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData.status === 'pending') {
+            if (!pendingList.includes(targetId)) pendingList.push(targetId);
+            localStorage.setItem('invibe_pending_users', JSON.stringify(pendingList));
+            showToast(resData.message || `Follow request sent to @${targetUsername}. ⏳`);
+
+            document.querySelectorAll(`.btn-follow-user[data-user-id="${targetId}"]`).forEach(btn => {
+              btn.className = 'btn-follow-user pending';
+              btn.style.background = 'rgba(234, 179, 8, 0.2)';
+              btn.style.color = '#eab308';
+              btn.textContent = 'Requested';
+            });
+          } else if (resData.status === 'following' || resData.isFollowing) {
+            if (!followingList.includes(targetId)) followingList.push(targetId);
+            const pIdx = pendingList.indexOf(targetId);
+            if (pIdx > -1) pendingList.splice(pIdx, 1);
+
+            localStorage.setItem('invibe_following_users', JSON.stringify(followingList));
+            localStorage.setItem('invibe_pending_users', JSON.stringify(pendingList));
+            showToast(resData.message || `Now following @${targetUsername}! 🎉`);
+
+            document.querySelectorAll(`.btn-follow-user[data-user-id="${targetId}"]`).forEach(btn => {
+              btn.className = 'btn-follow-user following';
+              btn.style.background = 'rgba(255,255,255,0.1)';
+              btn.style.color = '#ffffff';
+              btn.textContent = 'Following';
+            });
+          } else {
+            // Unfollowed
+            const fIdx = followingList.indexOf(targetId);
+            if (fIdx > -1) followingList.splice(fIdx, 1);
+            const pIdx = pendingList.indexOf(targetId);
+            if (pIdx > -1) pendingList.splice(pIdx, 1);
+
+            localStorage.setItem('invibe_following_users', JSON.stringify(followingList));
+            localStorage.setItem('invibe_pending_users', JSON.stringify(pendingList));
+            showToast(resData.message || `Unfollowed @${targetUsername}`);
+
+            document.querySelectorAll(`.btn-follow-user[data-user-id="${targetId}"]`).forEach(btn => {
+              btn.className = 'btn-follow-user';
+              btn.style.background = 'var(--primary, #a855f7)';
+              btn.style.color = '#ffffff';
+              btn.textContent = '+ Follow';
+            });
+          }
+
+          if (typeof updateAppUI === 'function') updateAppUI();
+        }
+      } catch (err) {
+        console.error("Follow action error:", err);
+      } finally {
+        followBtn.disabled = false;
+      }
+    }
+  });
 
   // Initialize Lucide Icons (Debounced for performance)
   let iconRenderQueued = false;
@@ -1194,31 +1292,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const isVideo = file.type.startsWith('video/');
         selectedPostMediaType = isVideo ? 'video' : 'image';
 
-        if (isVideo) {
-          if (selectedPostMediaBlobUrl) {
-            try { URL.revokeObjectURL(selectedPostMediaBlobUrl); } catch (e) {}
-          }
-          selectedPostMediaBlobUrl = URL.createObjectURL(file);
-          selectedPostMediaBase64 = selectedPostMediaBlobUrl;
-
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          selectedPostMediaBase64 = e.target.result;
           createPostPreviewContainer.style.display = 'block';
-          createPostPreviewImg.style.display = 'none';
-          createPostPreviewVideo.style.display = 'block';
-          createPostPreviewVideo.controls = true;
-          createPostPreviewVideo.src = selectedPostMediaBlobUrl;
-          updateSubmitButtonState();
-        } else {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            selectedPostMediaBase64 = e.target.result;
-            createPostPreviewContainer.style.display = 'block';
+
+          if (isVideo) {
+            if (selectedPostMediaBlobUrl) {
+              try { URL.revokeObjectURL(selectedPostMediaBlobUrl); } catch (err) {}
+            }
+            selectedPostMediaBlobUrl = URL.createObjectURL(file);
+            createPostPreviewImg.style.display = 'none';
+            createPostPreviewVideo.style.display = 'block';
+            createPostPreviewVideo.controls = true;
+            createPostPreviewVideo.src = selectedPostMediaBlobUrl;
+          } else {
             createPostPreviewVideo.style.display = 'none';
             createPostPreviewImg.style.display = 'block';
             createPostPreviewImg.src = selectedPostMediaBase64;
-            updateSubmitButtonState();
-          };
-          reader.readAsDataURL(file);
-        }
+          }
+          updateSubmitButtonState();
+        };
+        reader.readAsDataURL(file);
       }
     });
   }
@@ -1261,13 +1356,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentUserStr = localStorage.getItem('invibeUser');
         const currentUser = currentUserStr ? JSON.parse(currentUserStr) : { username: 'qewre', fullName: 'qewre' };
         const userPhoto = localStorage.getItem('invibeProfileImage') || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
-        const mediaUrl = selectedPostMediaBlobUrl || selectedPostMediaBase64 || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80';
+        const mediaUrlPayload = selectedPostMediaBase64 || selectedPostMediaBlobUrl || '';
         const mediaType = selectedPostMediaType || 'image';
 
         const newPostObj = {
           _id: 'post_' + Date.now(),
           caption: captionText || '',
-          mediaUrl: mediaUrl,
+          mediaUrl: selectedPostMediaBlobUrl || selectedPostMediaBase64 || '',
           mediaType: mediaType,
           createdAt: new Date().toISOString(),
           likes: [],
@@ -1291,7 +1386,6 @@ document.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('invibe_custom_posts', JSON.stringify(localPosts));
         } catch (quotaErr) {
           console.warn("Storage quota notice (large video file):", quotaErr.message);
-          // Retain lightweight entries if quota exceeded
           try {
             const lightPosts = (JSON.parse(localStorage.getItem('invibe_custom_posts') || '[]'))
               .slice(0, 5)
@@ -1311,9 +1405,14 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             body: JSON.stringify({
               caption: captionText,
-              mediaUrl: mediaUrl,
+              mediaUrl: mediaUrlPayload,
               mediaType: mediaType
             })
+          }).then(res => res.json()).then(data => {
+            if (data && data.mediaUrl) {
+              newPostObj.mediaUrl = data.mediaUrl;
+              loadFeedPosts();
+            }
           }).catch(e => console.warn("Backend sync notice:", e.message));
         } catch (netErr) {}
 
@@ -5119,42 +5218,42 @@ document.addEventListener('DOMContentLoaded', () => {
     localPosts.forEach(p => { if (!combinedMap.has(p._id)) combinedMap.set(p._id, p); });
     posts.forEach(p => { if (!combinedMap.has(p._id)) combinedMap.set(p._id, p); });
 
-    posts = Array.from(combinedMap.values());
-
-    if (posts.length === 0) {
-      const currentUserStr = localStorage.getItem('invibeUser');
-      const currentUser = currentUserStr ? JSON.parse(currentUserStr) : { username: 'haribol' };
-      const currentPhoto = localStorage.getItem('invibeProfileImage') || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
-
-      posts = [{
-        _id: 'sample_phoenix_1',
-        caption: 'PHOENIX AI - AI-POWERED POST-DISASTER RECOVERY INTELLIGENCE 🚀🔥 Analyze damage, prioritize what matters, rebuild smarter.',
-        mediaUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-        mediaType: 'image',
-        createdAt: new Date().toISOString(),
-        likes: [],
-        comments: [],
-        author: {
-          _id: 'usr_' + (currentUser.username || 'haribol'),
-          username: currentUser.username || 'haribol',
-          fullName: currentUser.username || 'haribol',
-          profileImage: currentPhoto
-        }
-      }];
-    }
+    // Filter out any legacy placeholder hubble_user posts
+    posts = posts.filter(p => {
+      const u = p.author?.username;
+      const id = p.author?._id || p.author?.id;
+      return u !== 'hubble_user' && u !== 'haribol' && id !== '00000000-0000-0000-0000-000000000001';
+    });
 
     const emptyState = document.getElementById('feed-empty-state');
     feedContainer.innerHTML = '';
     if (emptyState) {
-      emptyState.style.display = 'none';
+      if (posts.length === 0) {
+        emptyState.style.display = 'block';
+      } else {
+        emptyState.style.display = 'none';
+      }
       feedContainer.appendChild(emptyState);
     }
 
     const currentUserStr = localStorage.getItem('invibeUser');
     const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
+    const currentUserId = currentUser ? (currentUser.id || currentUser._id) : null;
+
+    const storedFollowing = JSON.parse(localStorage.getItem('invibe_following_users') || '[]');
+    const storedPending = JSON.parse(localStorage.getItem('invibe_pending_users') || '[]');
+    const followingSet = new Set(storedFollowing);
+    const pendingSet = new Set(storedPending);
 
     posts.forEach(post => {
-      const isLikedByMe = currentUser ? (post.likes || []).includes(currentUser.id) : false;
+      const isLikedByMe = currentUser ? (post.likes || []).includes(currentUserId) : false;
+      const authorObj = post.author || {};
+      const authorId = authorObj._id || authorObj.id || 'usr_unknown';
+      const authorName = authorObj.fullName || authorObj.username || 'User';
+      const authorUsername = authorObj.username || 'user';
+      const isMe = currentUserId && (currentUserId.toString() === authorId.toString());
+      const isFollowing = followingSet.has(authorId);
+      const isPending = pendingSet.has(authorId);
 
       const card = document.createElement('article');
       card.className = 'feed-card';
@@ -5165,9 +5264,9 @@ document.addEventListener('DOMContentLoaded', () => {
       (post.comments || []).forEach(comment => {
         commentsHTML += `
           <div class="comment-item" style="display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px;">
-            <img src="${comment.author.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80'}" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
+            <img src="${comment.author?.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80'}" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
             <div>
-              <strong style="color: var(--text-color); margin-right: 4px;">${comment.author.username}</strong>
+              <strong style="color: var(--text-color); margin-right: 4px;">${comment.author?.username || 'user'}</strong>
               <span style="color: var(--text-muted);">${comment.text}</span>
             </div>
           </div>
@@ -5175,19 +5274,29 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       card.innerHTML = `
-        <div class="post-header">
-          <div class="post-author-info">
-            <img src="${post.author.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80'}" alt="${post.author.fullName}" class="author-avatar" />
+        <div class="post-header" style="display: flex; align-items: center; justify-content: space-between;">
+          <div class="post-author-info" style="display: flex; align-items: center; gap: 10px;">
+            <img src="${authorObj.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&h=80&q=80'}" alt="${authorName}" class="author-avatar" style="cursor: pointer;" data-user-id="${authorId}" />
             <div>
-              <h4 class="author-name">${post.author.fullName}</h4>
-              <div class="post-meta">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <h4 class="author-name" style="margin: 0; cursor: pointer;" data-user-id="${authorId}">${authorName}</h4>
+                <span class="author-handle" style="font-size: 12px; color: var(--text-muted, #94a3b8);">@${authorUsername}</span>
+              </div>
+              <div class="post-meta" style="margin-top: 2px;">
                 <span class="post-time">${new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 <span class="dot-separator">•</span>
                 <i data-lucide="globe" class="meta-icon"></i>
               </div>
             </div>
           </div>
-          <button class="post-options-btn"><i data-lucide="more-horizontal"></i></button>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            ${!isMe ? `
+              <button type="button" class="btn-follow-user ${isFollowing ? 'following' : (isPending ? 'pending' : '')}" data-user-id="${authorId}" data-username="${authorUsername}" style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; background: ${isFollowing ? 'rgba(255,255,255,0.1)' : (isPending ? 'rgba(234, 179, 8, 0.2)' : 'var(--primary, #a855f7)')}; color: ${isPending ? '#eab308' : '#ffffff'};">
+                ${isFollowing ? 'Following' : (isPending ? 'Requested' : '+ Follow')}
+              </button>
+            ` : ''}
+            <button class="post-options-btn"><i data-lucide="more-horizontal"></i></button>
+          </div>
         </div>
 
         <div class="post-media-container" style="position:relative; overflow:hidden; border-radius: 12px; margin: 12px 0;">
@@ -7147,57 +7256,97 @@ document.addEventListener('DOMContentLoaded', () => {
 
     notifications.forEach(notif => {
       const item = document.createElement('div');
-      item.className = `notification-item ${notif.read ? '' : 'unread'}`;
+      const isUnread = notif.isRead === false || notif.read === false;
+      item.className = `notification-item ${isUnread ? 'unread' : ''}`;
 
-      const sender = notif.sender || { fullName: 'Someone', username: 'someone', profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80' };
+      const sender = notif.sender || { fullName: 'User', username: 'user', profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80' };
       const senderAvatar = sender.profileImage || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80';
 
-      let messageText = '';
-      let mediaThumbnail = '';
+      let messageText = notif.text || `<strong>@${sender.username}</strong> interacted with you.`;
+      let actionButtons = '';
 
-      if (notif.type === 'follow') {
+      if (notif.type === 'follow_request') {
+        messageText = `<strong>@${sender.username}</strong> requested to follow you.`;
+        actionButtons = `
+          <div class="notif-action-btns" style="display: flex; gap: 6px; margin-top: 6px;">
+            <button type="button" class="btn-accept-request" data-sender-id="${sender._id}" style="padding: 4px 10px; background: var(--primary, #a855f7); color: white; border: none; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;">Accept</button>
+            <button type="button" class="btn-reject-request" data-sender-id="${sender._id}" style="padding: 4px 10px; background: rgba(255,255,255,0.1); color: white; border: none; border-radius: 12px; font-size: 11px; font-weight: 600; cursor: pointer;">Decline</button>
+          </div>
+        `;
+      } else if (notif.type === 'accept_follow_request') {
+        messageText = `<strong>@${sender.username}</strong> accepted your follow request.`;
+      } else if (notif.type === 'follow') {
         messageText = `<strong>@${sender.username}</strong> started following you.`;
-      } else if (notif.type === 'like_post') {
+      } else if (notif.type === 'like') {
         messageText = `<strong>@${sender.username}</strong> liked your post.`;
-        if (notif.post && notif.post.mediaUrl) {
-          mediaThumbnail = `<img src="${notif.post.mediaUrl}" class="notification-media" alt="Post thumbnail"/>`;
-        }
-      } else if (notif.type === 'like_reel') {
-        messageText = `<strong>@${sender.username}</strong> liked your reel.`;
-        if (notif.reel && notif.reel.videoUrl) {
-          mediaThumbnail = `
-            <div style="position: relative; width: 36px; height: 36px;">
-              <video src="${notif.reel.videoUrl}" class="notification-media" style="object-fit: cover; width:36px; height:36px;" muted></video>
-              <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm);">
-                <i data-lucide="play" style="width: 10px; height: 10px; stroke: white; fill: white;"></i>
-              </div>
-            </div>`;
-        }
-      } else if (notif.type === 'like_story') {
-        messageText = `❤️ <strong>@${sender.username}</strong> liked your Hub.`;
-        if (notif.story && notif.story.mediaUrl) {
-          mediaThumbnail = `<img src="${notif.story.mediaUrl}" class="notification-media" alt="Hub thumbnail"/>`;
-        }
+      } else if (notif.type === 'comment') {
+        messageText = `<strong>@${sender.username}</strong> commented on your post.`;
       }
 
-      const timeAgo = formatTimeAgo(new Date(notif.createdAt));
+      const timeAgo = formatTimeAgo(new Date(notif.createdAt || Date.now()));
 
       item.innerHTML = `
         <img src="${senderAvatar}" class="notification-avatar" alt="${sender.username}"/>
-        <div class="notification-content">
+        <div class="notification-content" style="flex: 1;">
           <p>${messageText}</p>
           <span class="notification-time">${timeAgo}</span>
+          ${actionButtons}
         </div>
-        ${mediaThumbnail}
       `;
 
       item.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-accept-request, .btn-reject-request')) return;
         e.stopPropagation();
         if (sender._id) {
           switchView('profile', sender._id);
           notifPanel.style.display = 'none';
         }
       });
+
+      // Attach accept / reject listeners
+      const acceptBtn = item.querySelector('.btn-accept-request');
+      const rejectBtn = item.querySelector('.btn-reject-request');
+
+      if (acceptBtn) {
+        acceptBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const senderId = acceptBtn.getAttribute('data-sender-id');
+          const token = localStorage.getItem('invibe_jwt_token');
+          try {
+            const res = await fetch(`${API_URL}/api/users/${senderId}/accept-follow-request`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+              showToast(`Accepted follow request from @${sender.username}! 🎉`);
+              item.remove();
+              updateAppUI();
+            }
+          } catch (err) {
+            console.error("Accept error:", err);
+          }
+        });
+      }
+
+      if (rejectBtn) {
+        rejectBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const senderId = rejectBtn.getAttribute('data-sender-id');
+          const token = localStorage.getItem('invibe_jwt_token');
+          try {
+            const res = await fetch(`${API_URL}/api/users/${senderId}/reject-follow-request`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+              showToast(`Declined request from @${sender.username}`);
+              item.remove();
+            }
+          } catch (err) {
+            console.error("Decline error:", err);
+          }
+        });
+      }
 
       listContainer.appendChild(item);
     });

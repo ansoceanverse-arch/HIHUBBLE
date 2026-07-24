@@ -52,22 +52,91 @@
         </div>
 
         <div class="welcome-bottom">
-          <h1 class="welcome-title">Welcome to Hi-Hubble</h1>
-          <p class="welcome-subtitle">Enter your username and snap a live photograph to join!</p>
-
-          <!-- STEP 1: USERNAME INPUT -->
-          <div id="onboard-step-1" class="onboard-step">
-            <div class="onboard-input-box">
-              <i data-lucide="user"></i>
-              <input type="text" id="quick-username-input" placeholder="Choose your username..." autocomplete="off">
-            </div>
-            <p id="onboard-username-error" class="onboard-error-msg" style="display: none;"></p>
-            <button id="btn-goto-camera" class="welcome-btn btn-primary onboard-btn">
-              <i data-lucide="camera"></i> Next: Take Live Photo
+          <!-- AUTH TABS: SIGN UP | LOGIN -->
+          <div class="auth-toggle-tabs" style="display: flex; gap: 8px; margin-bottom: 16px; background: rgba(0,0,0,0.25); padding: 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+            <button type="button" id="tab-btn-signup" class="auth-tab-btn active" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: var(--primary, #a855f7); color: white; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s;">
+              <i data-lucide="user-plus" style="width: 15px; height: 15px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i> Sign Up
+            </button>
+            <button type="button" id="tab-btn-login" class="auth-tab-btn" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: transparent; color: var(--text-muted, #94a3b8); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s;">
+              <i data-lucide="log-in" style="width: 15px; height: 15px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i> Login
             </button>
           </div>
 
-          <!-- STEP 2: LIVE WEBCAM CAMERA -->
+          <!-- TAB 1: SIGN UP FORM -->
+          <div id="onboard-step-1" class="onboard-step" style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="onboard-input-box">
+              <i data-lucide="user"></i>
+              <input type="text" id="signup-fullname-input" placeholder="Full Name..." autocomplete="off">
+            </div>
+            <div class="onboard-input-box">
+              <i data-lucide="mail"></i>
+              <input type="email" id="signup-email-input" placeholder="Email Address..." autocomplete="off">
+            </div>
+            <div class="onboard-input-box">
+              <i data-lucide="at-sign"></i>
+              <input type="text" id="quick-username-input" placeholder="Choose Username..." autocomplete="off">
+            </div>
+            <div class="onboard-input-box">
+              <i data-lucide="lock"></i>
+              <input type="password" id="signup-password-input" placeholder="Strong Password (min 8 chars)..." autocomplete="new-password">
+            </div>
+            <div class="onboard-input-box">
+              <i data-lucide="phone"></i>
+              <input type="tel" id="signup-phone-input" placeholder="Mobile Number (optional)..." autocomplete="off">
+            </div>
+            <p id="onboard-username-error" class="onboard-error-msg" style="display: none;"></p>
+            <button id="btn-goto-camera" class="welcome-btn btn-primary onboard-btn" style="margin-top: 4px;">
+              <i data-lucide="send"></i> Send Verification Code (OTP)
+            </button>
+          </div>
+
+          <!-- TAB 2: LOGIN FORM -->
+          <div id="onboard-login-step" class="onboard-step" style="display: none; flex-direction: column; gap: 10px;">
+            <div class="onboard-input-box">
+              <i data-lucide="user"></i>
+              <input type="text" id="login-username-input" placeholder="Username or Email..." autocomplete="username">
+            </div>
+            <div class="onboard-input-box">
+              <i data-lucide="lock"></i>
+              <input type="password" id="login-password-input" placeholder="Password..." autocomplete="current-password">
+            </div>
+            <p id="login-error-msg" class="onboard-error-msg" style="display: none;"></p>
+            <button id="btn-login-submit" class="welcome-btn btn-primary onboard-btn" style="margin-top: 4px;">
+              <i data-lucide="log-in"></i> Login to Hi-Hubble
+            </button>
+          </div>
+
+          <!-- STEP 2: INLINE OTP VERIFICATION STEP -->
+          <div id="onboard-otp-step" class="onboard-step" style="display: none; flex-direction: column; gap: 12px; text-align: center;">
+            <div style="margin-bottom: 4px;">
+              <h3 style="font-size: 18px; font-weight: 700; color: #ffffff; margin: 0 0 6px 0;">Enter Verification Code</h3>
+              <p id="inline-otp-instruction" style="font-size: 13px; color: var(--text-muted, #94a3b8); margin: 0; line-height: 1.4;">Please enter the 6-digit code sent to your email.</p>
+            </div>
+
+            <div class="otp-input-container" style="display: flex; justify-content: center; gap: 8px; margin: 8px 0;">
+              <input type="text" maxlength="1" class="otp-input" data-index="0" style="width: 42px; height: 48px; text-align: center; font-size: 22px; font-weight: 700; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff;">
+              <input type="text" maxlength="1" class="otp-input" data-index="1" style="width: 42px; height: 48px; text-align: center; font-size: 22px; font-weight: 700; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff;">
+              <input type="text" maxlength="1" class="otp-input" data-index="2" style="width: 42px; height: 48px; text-align: center; font-size: 22px; font-weight: 700; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff;">
+              <input type="text" maxlength="1" class="otp-input" data-index="3" style="width: 42px; height: 48px; text-align: center; font-size: 22px; font-weight: 700; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff;">
+              <input type="text" maxlength="1" class="otp-input" data-index="4" style="width: 42px; height: 48px; text-align: center; font-size: 22px; font-weight: 700; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff;">
+              <input type="text" maxlength="1" class="otp-input" data-index="5" style="width: 42px; height: 48px; text-align: center; font-size: 22px; font-weight: 700; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff;">
+            </div>
+
+            <p id="inline-otp-error-msg" class="onboard-error-msg" style="display: none; margin: 0;"></p>
+
+            <button id="btn-verify-otp-step" class="welcome-btn btn-primary onboard-btn" style="width: 100%;">
+              <i data-lucide="check-circle"></i> Verify Code & Continue
+            </button>
+
+            <div class="otp-resend" style="font-size: 13px; color: var(--text-muted, #94a3b8); margin-top: 4px;">
+              Didn't receive the code? <a href="#" id="inline-resend-otp-link" style="color: var(--primary, #a855f7); font-weight: 600; text-decoration: none;">Resend in <span id="inline-otp-timer">25</span>s</a>
+            </div>
+            <button id="btn-back-to-signup" type="button" style="background: none; border: none; color: var(--text-muted, #94a3b8); font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 2px;">
+              ← Back to Sign Up
+            </button>
+          </div>
+
+          <!-- STEP 3: LIVE WEBCAM CAMERA -->
           <div id="onboard-step-2" class="onboard-step" style="display: none;">
             <div class="webcam-circle-container">
               <video id="live-webcam-video" autoplay playsinline muted></video>
@@ -124,7 +193,7 @@
       <div class="otp-footer">
         <button type="button" class="auth-submit-btn" id="verify-otp-btn">Verify Code</button>
         <div class="otp-resend">
-          Didn't receive the code? <a href="#" id="resend-otp-link">Resend in <span id="otp-timer">30</span>s</a>
+          Didn't receive the code? <a href="#" id="resend-otp-link">Resend in <span id="otp-timer">25</span>s</a>
         </div>
       </div>
     </div>
